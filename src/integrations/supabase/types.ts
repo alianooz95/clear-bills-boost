@@ -14,16 +14,158 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      customers: {
+        Row: {
+          balance: number
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          owner_id: string
+          phone: string | null
+          tax_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          owner_id: string
+          phone?: string | null
+          tax_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          owner_id?: string
+          phone?: string | null
+          tax_number?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      invoice_items: {
+        Row: {
+          bonus_quantity: number
+          discount_amount: number
+          id: string
+          invoice_id: string
+          item_name: string
+          line_total: number
+          sold_quantity: number
+          unit_price: number
+        }
+        Insert: {
+          bonus_quantity?: number
+          discount_amount?: number
+          id?: string
+          invoice_id: string
+          item_name: string
+          line_total?: number
+          sold_quantity?: number
+          unit_price?: number
+        }
+        Update: {
+          bonus_quantity?: number
+          discount_amount?: number
+          id?: string
+          invoice_id?: string
+          item_name?: string
+          line_total?: number
+          sold_quantity?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          created_at: string
+          customer_id: string
+          discount_total: number
+          id: string
+          invoice_date: string
+          invoice_number: string
+          invoice_type: Database["public"]["Enums"]["invoice_type"]
+          notes: string | null
+          owner_id: string
+          subtotal: number
+          total: number
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          discount_total?: number
+          id?: string
+          invoice_date?: string
+          invoice_number: string
+          invoice_type: Database["public"]["Enums"]["invoice_type"]
+          notes?: string | null
+          owner_id: string
+          subtotal?: number
+          total?: number
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          discount_total?: number
+          id?: string
+          invoice_date?: string
+          invoice_number?: string
+          invoice_type?: Database["public"]["Enums"]["invoice_type"]
+          notes?: string | null
+          owner_id?: string
+          subtotal?: number
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      apply_invoice_delta: {
+        Args: {
+          p_customer: string
+          p_sign: number
+          p_total: number
+          p_type: Database["public"]["Enums"]["invoice_type"]
+        }
+        Returns: undefined
+      }
+      generate_invoice_number: {
+        Args: { p_type: Database["public"]["Enums"]["invoice_type"] }
+        Returns: string
+      }
+      recalc_invoice_totals: {
+        Args: { p_invoice_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
-      [_ in never]: never
+      invoice_type: "sales" | "credit_note"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +292,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      invoice_type: ["sales", "credit_note"],
+    },
   },
 } as const
