@@ -342,3 +342,96 @@ function NewInvoicePage() {
     </div>
   );
 }
+
+type InventoryRow = {
+  id: string;
+  name: string;
+  batch_number: string | null;
+  expiry_date: string | null;
+  unit: string | null;
+  unit_price: number;
+};
+
+function InventoryPicker({
+  value,
+  onPick,
+  onFreeText,
+}: {
+  value: string;
+  onPick: (item: InventoryRow) => void;
+  onFreeText: (text: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const listFn = useServerFn(listInventory);
+  const { data: inventory } = useQuery({
+    queryKey: ["inventory", query],
+    queryFn: () => listFn({ data: { search: query } }),
+    enabled: open,
+  });
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          role="combobox"
+          className="w-full h-11 justify-between text-base font-normal"
+        >
+          <span className="flex items-center gap-2 min-w-0 flex-1 truncate text-start">
+            <Package className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <span className={value ? "" : "text-muted-foreground"}>
+              {value || "اختر صنفاً من المخزون…"}
+            </span>
+          </span>
+          <ChevronsUpDown className="h-4 w-4 opacity-50 shrink-0" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="p-0 w-[--radix-popover-trigger-width] pointer-events-auto" align="start">
+        <Command shouldFilter={false}>
+          <CommandInput placeholder="ابحث أو اكتب اسم صنف جديد…" value={query} onValueChange={setQuery} />
+          <CommandList>
+            <CommandEmpty>
+              <div className="space-y-2 p-2">
+                <div className="text-sm text-muted-foreground">لا يوجد صنف بهذا الاسم.</div>
+                {query.trim() && (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="w-full"
+                    onClick={() => { onFreeText(query.trim()); setOpen(false); }}
+                  >
+                    استخدام "{query.trim()}" كاسم حر
+                  </Button>
+                )}
+              </div>
+            </CommandEmpty>
+            {(inventory as InventoryRow[] | undefined)?.length ? (
+              <CommandGroup heading="أصناف المخزون">
+                {(inventory as InventoryRow[]).map((it) => (
+                  <CommandItem
+                    key={it.id}
+                    value={it.id}
+                    onSelect={() => { onPick(it); setOpen(false); }}
+                    className="flex items-center justify-between gap-2"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate font-medium">{it.name}</div>
+                      <div className="text-xs text-muted-foreground flex gap-2 flex-wrap">
+                        {it.batch_number && <span dir="ltr">#{it.batch_number}</span>}
+                        {it.expiry_date && <span dir="ltr">⏱ {it.expiry_date}</span>}
+                        {it.unit && <span>{it.unit}</span>}
+                      </div>
+                    </div>
+                    <span className="font-mono text-sm font-semibold shrink-0">{formatMoney(it.unit_price)}</span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            ) : null}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
