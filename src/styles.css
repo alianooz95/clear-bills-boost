@@ -142,3 +142,100 @@
     color: var(--color-foreground);
   }
 }
+
+/* ===== Invoice template tokens & styles ===== */
+:root {
+  --invoice-ink: oklch(0.18 0.04 265);
+  --invoice-muted: oklch(0.55 0.02 260);
+  --invoice-line: oklch(0.92 0.01 260);
+  --invoice-soft: oklch(0.985 0.005 260);
+  --invoice-accent: oklch(0.62 0.14 45);     /* warm gold */
+  --invoice-accent-2: oklch(0.78 0.15 80);   /* light gold */
+  --invoice-danger: oklch(0.58 0.22 27);
+  --invoice-gradient: linear-gradient(135deg, var(--invoice-ink) 0%, oklch(0.28 0.06 265) 60%, var(--invoice-accent) 140%);
+  --invoice-shadow: 0 30px 60px -30px oklch(0.18 0.04 265 / 0.25), 0 8px 20px -12px oklch(0.18 0.04 265 / 0.15);
+}
+
+.invoice-sheet {
+  background: var(--background);
+  color: var(--invoice-ink);
+  box-shadow: var(--invoice-shadow);
+  border-radius: 1.25rem;
+  overflow: hidden;
+  position: relative;
+}
+.invoice-header {
+  background: var(--invoice-gradient);
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+.invoice-header::before {
+  content: "";
+  position: absolute;
+  inset: -40% -10% auto auto;
+  width: 420px; height: 420px;
+  background: radial-gradient(closest-side, oklch(1 0 0 / 0.12), transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.invoice-header::after {
+  content: "";
+  position: absolute;
+  inset: auto auto -60% -10%;
+  width: 360px; height: 360px;
+  background: radial-gradient(closest-side, var(--invoice-accent) / 0.25, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0.35;
+}
+.invoice-accent-bar {
+  height: 4px;
+  background: linear-gradient(90deg, var(--invoice-accent), var(--invoice-accent-2));
+}
+.invoice-watermark {
+  position: absolute;
+  inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+  font-weight: 900;
+  font-size: 12rem;
+  color: var(--invoice-danger);
+  opacity: 0.05;
+  letter-spacing: 0.5rem;
+  transform: rotate(-18deg);
+}
+.invoice-table thead th {
+  background: var(--invoice-ink);
+  color: white;
+  font-weight: 600;
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+  padding: 0.75rem 1rem;
+}
+.invoice-table tbody tr:nth-child(even) td {
+  background: var(--invoice-soft);
+}
+.invoice-table tbody td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--invoice-line);
+  font-size: 0.9rem;
+}
+.invoice-totals {
+  background: linear-gradient(135deg, var(--invoice-soft), white);
+  border: 1px solid var(--invoice-line);
+  border-radius: 1rem;
+}
+.invoice-grand {
+  background: var(--invoice-gradient);
+  color: white;
+  border-radius: 0.85rem;
+  padding: 1rem 1.25rem;
+}
+
+@media print {
+  @page { size: A4; margin: 12mm; }
+  body { background: white !important; }
+  .invoice-sheet { box-shadow: none !important; border-radius: 0 !important; }
+  .print\:hidden { display: none !important; }
+}
