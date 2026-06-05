@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { ensureDemoUser } from "@/lib/auth/demo.functions";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "تسجيل الدخول — نظام الفواتير" }] }),
@@ -18,6 +20,7 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const ensureDemo = useServerFn(ensureDemoUser);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -46,6 +49,24 @@ function AuthPage() {
     toast.success("تم إنشاء الحساب — راجع بريدك لتأكيد البريد الإلكتروني.");
   };
 
+  const quickDemoLogin = async () => {
+    setLoading(true);
+    try {
+      const creds = await ensureDemo();
+      const { error } = await supabase.auth.signInWithPassword({
+        email: creds.email,
+        password: creds.password,
+      });
+      if (error) throw error;
+      toast.success("مرحباً بك في الحساب التجريبي");
+      navigate({ to: "/customers" });
+    } catch (e: any) {
+      toast.error(e?.message ?? "تعذر الدخول التجريبي");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
       <Card className="w-full max-w-md">
@@ -54,6 +75,14 @@ function AuthPage() {
           <CardDescription>سجّل الدخول أو أنشئ حسابًا للمتابعة.</CardDescription>
         </CardHeader>
         <CardContent>
+          <Button
+            variant="secondary"
+            className="w-full mb-4"
+            disabled={loading}
+            onClick={quickDemoLogin}
+          >
+            🚀 {loading ? "جارٍ التحضير..." : "دخول سريع بحساب تجريبي"}
+          </Button>
           <Tabs defaultValue="signin">
             <TabsList className="grid grid-cols-2 w-full">
               <TabsTrigger value="signin">تسجيل الدخول</TabsTrigger>
