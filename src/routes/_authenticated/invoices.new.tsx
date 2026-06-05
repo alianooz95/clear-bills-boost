@@ -5,13 +5,16 @@ import { useMemo, useState } from "react";
 import { z } from "zod";
 import { listCustomers } from "@/lib/customers/customers.functions";
 import { createInvoice } from "@/lib/invoices/invoices.functions";
+import { listInventory } from "@/lib/inventory/inventory.functions";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Plus, Minus, ChevronDown, ChevronUp, Check } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Trash2, Plus, Minus, ChevronDown, ChevronUp, Check, Package, ChevronsUpDown } from "lucide-react";
 import { computeInvoiceTotals, computeLineTotal, formatMoney } from "@/lib/invoices/invoice-math";
 import { toast } from "sonner";
 
@@ -21,6 +24,10 @@ type Row = {
   bonus_quantity: string;
   unit_price: string;
   discount_amount: string;
+  inventory_item_id?: string | null;
+  batch_number?: string | null;
+  expiry_date?: string | null;
+  unit?: string | null;
 };
 
 const emptyRow = (): Row => ({
@@ -29,6 +36,10 @@ const emptyRow = (): Row => ({
   bonus_quantity: "0",
   unit_price: "0",
   discount_amount: "0",
+  inventory_item_id: null,
+  batch_number: null,
+  expiry_date: null,
+  unit: null,
 });
 
 const SearchSchema = z.object({ customer: z.string().uuid().optional() });
@@ -63,6 +74,10 @@ function NewInvoicePage() {
         bonus_quantity: Number(r.bonus_quantity) || 0,
         unit_price: Number(r.unit_price) || 0,
         discount_amount: Number(r.discount_amount) || 0,
+        inventory_item_id: r.inventory_item_id || null,
+        batch_number: r.batch_number || null,
+        expiry_date: r.expiry_date || null,
+        unit: r.unit || null,
       })),
     [rows],
   );
@@ -170,12 +185,40 @@ function NewInvoicePage() {
                   </Button>
                 </div>
 
-                <Input
-                  className="h-11 text-base"
-                  placeholder="اسم الصنف (مثال: باراسيتامول 500)"
+                <InventoryPicker
                   value={r.item_name}
-                  onChange={(e) => updateRow(i, { item_name: e.target.value })}
+                  onPick={(picked) =>
+                    updateRow(i, {
+                      item_name: picked.name,
+                      unit_price: String(picked.unit_price),
+                      inventory_item_id: picked.id,
+                      batch_number: picked.batch_number,
+                      expiry_date: picked.expiry_date,
+                      unit: picked.unit,
+                    })
+                  }
+                  onFreeText={(text) =>
+                    updateRow(i, {
+                      item_name: text,
+                      inventory_item_id: null,
+                      batch_number: null,
+                      expiry_date: null,
+                      unit: null,
+                    })
+                  }
                 />
+
+                {(r.batch_number || r.expiry_date) && (
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    {r.batch_number && (
+                      <span className="px-2 py-1 rounded-md bg-muted">باتش: <span dir="ltr">{r.batch_number}</span></span>
+                    )}
+                    {r.expiry_date && (
+                      <span className="px-2 py-1 rounded-md bg-muted">انتهاء: <span dir="ltr">{r.expiry_date}</span></span>
+                    )}
+                    {r.unit && <span className="px-2 py-1 rounded-md bg-muted">{r.unit}</span>}
+                  </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-3">
                   {/* Quantity stepper */}
