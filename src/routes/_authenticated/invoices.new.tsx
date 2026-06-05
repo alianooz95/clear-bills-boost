@@ -5,14 +5,13 @@ import { useMemo, useState } from "react";
 import { z } from "zod";
 import { listCustomers } from "@/lib/customers/customers.functions";
 import { createInvoice } from "@/lib/invoices/invoices.functions";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash2, Plus } from "lucide-react";
+import { Trash2, Plus, Minus, ChevronDown, ChevronUp, Check } from "lucide-react";
 import { computeInvoiceTotals, computeLineTotal, formatMoney } from "@/lib/invoices/invoice-math";
 import { toast } from "sonner";
 
@@ -54,6 +53,7 @@ function NewInvoicePage() {
   const [date, setDate] = useState<string>(new Date().toISOString().slice(0, 10));
   const [notes, setNotes] = useState("");
   const [rows, setRows] = useState<Row[]>([emptyRow()]);
+  const [expanded, setExpanded] = useState<Record<number, boolean>>({});
 
   const items = useMemo(
     () =>
@@ -90,123 +90,212 @@ function NewInvoicePage() {
   const updateRow = (i: number, patch: Partial<Row>) =>
     setRows((rs) => rs.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
 
+  const bumpQty = (i: number, delta: number) =>
+    updateRow(i, { sold_quantity: String(Math.max(0, (Number(rows[i].sold_quantity) || 0) + delta)) });
+
   const canSubmit =
     !!customerId &&
     !!date &&
     items.some((it) => it.item_name.trim() && it.sold_quantity > 0 && it.unit_price >= 0);
 
-  return (
-    <div className="space-y-4 max-w-5xl mx-auto">
-      <h1 className="text-2xl font-bold">فاتورة جديدة</h1>
+  const filledCount = items.filter((it) => it.item_name.trim() && it.sold_quantity > 0).length;
 
-      <Card>
-        <CardContent className="pt-6 grid sm:grid-cols-3 gap-4">
-          <div className="space-y-1.5">
-            <Label>نوع الفاتورة</Label>
-            <Select value={type} onValueChange={(v) => setType(v as any)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="sales">فاتورة مبيعات</SelectItem>
-                <SelectItem value="credit_note">فاتورة تعويضية</SelectItem>
-              </SelectContent>
-            </Select>
+  return (
+    <div className="max-w-3xl mx-auto pb-32">
+      <h1 className="text-xl sm:text-2xl font-bold mb-4">فاتورة جديدة</h1>
+
+      {/* Step 1: Type segmented + basics */}
+      <Card className="mb-4">
+        <CardContent className="pt-5 space-y-4">
+          {/* Segmented invoice type */}
+          <div className="grid grid-cols-2 gap-2 p-1 bg-muted rounded-lg">
+            <button
+              type="button"
+              onClick={() => setType("sales")}
+              className={`py-2.5 rounded-md text-sm font-semibold transition ${type === "sales" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
+            >
+              مبيعات
+            </button>
+            <button
+              type="button"
+              onClick={() => setType("credit_note")}
+              className={`py-2.5 rounded-md text-sm font-semibold transition ${type === "credit_note" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
+            >
+              تعويضية / مرتجع
+            </button>
           </div>
-          <div className="space-y-1.5">
-            <Label>العميل *</Label>
-            <Select value={customerId} onValueChange={setCustomerId}>
-              <SelectTrigger><SelectValue placeholder="اختر عميلًا…" /></SelectTrigger>
-              <SelectContent>
-                {(customers ?? []).map((c) => (
-                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <Label>التاريخ *</Label>
-            <Input dir="ltr" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>العميل *</Label>
+              <Select value={customerId} onValueChange={setCustomerId}>
+                <SelectTrigger className="h-11"><SelectValue placeholder="اختر عميلًا…" /></SelectTrigger>
+                <SelectContent>
+                  {(customers ?? []).map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>التاريخ</Label>
+              <Input className="h-11" dir="ltr" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>الأصناف</CardTitle>
-          <Button size="sm" variant="outline" onClick={() => setRows((r) => [...r, emptyRow()])}>
-            <Plus className="h-4 w-4 ms-1" /> سطر
+      {/* Step 2: Items as stacked cards */}
+      <div className="space-y-3">
+        {rows.map((r, i) => {
+          const lt = computeLineTotal({
+            sold_quantity: Number(r.sold_quantity) || 0,
+            unit_price: Number(r.unit_price) || 0,
+            discount_amount: Number(r.discount_amount) || 0,
+          });
+          const isOpen = !!expanded[i];
+          const hasExtras = Number(r.bonus_quantity) > 0 || Number(r.discount_amount) > 0;
+          return (
+            <Card key={i} className="overflow-hidden">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="text-xs font-semibold text-muted-foreground">صنف #{i + 1}</div>
+                  <Button
+                    variant="ghost" size="icon"
+                    onClick={() => setRows((rs) => rs.filter((_, idx) => idx !== i))}
+                    disabled={rows.length === 1}
+                    className="h-8 w-8 text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                <Input
+                  className="h-11 text-base"
+                  placeholder="اسم الصنف (مثال: باراسيتامول 500)"
+                  value={r.item_name}
+                  onChange={(e) => updateRow(i, { item_name: e.target.value })}
+                />
+
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Quantity stepper */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">الكمية</Label>
+                    <div className="flex items-center h-11 rounded-md border bg-background overflow-hidden">
+                      <button type="button" onClick={() => bumpQty(i, -1)} className="h-full w-11 flex items-center justify-center hover:bg-muted">
+                        <Minus className="h-4 w-4" />
+                      </button>
+                      <Input
+                        dir="ltr"
+                        type="number" inputMode="decimal" min="0" step="1"
+                        value={r.sold_quantity}
+                        onChange={(e) => updateRow(i, { sold_quantity: e.target.value })}
+                        className="h-full border-0 text-center font-bold text-base focus-visible:ring-0"
+                      />
+                      <button type="button" onClick={() => bumpQty(i, 1)} className="h-full w-11 flex items-center justify-center hover:bg-muted">
+                        <Plus className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                  {/* Price */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">سعر الوحدة</Label>
+                    <Input
+                      dir="ltr" type="number" inputMode="decimal" min="0" step="0.01"
+                      value={r.unit_price}
+                      onChange={(e) => updateRow(i, { unit_price: e.target.value })}
+                      className="h-11 text-base font-mono"
+                    />
+                  </div>
+                </div>
+
+                {/* Advanced toggle */}
+                <button
+                  type="button"
+                  onClick={() => setExpanded((s) => ({ ...s, [i]: !isOpen }))}
+                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  {isOpen ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                  بونص وخصم {hasExtras && !isOpen && <span className="text-primary">•</span>}
+                </button>
+
+                {isOpen && (
+                  <div className="grid grid-cols-2 gap-3 pt-1 border-t">
+                    <div className="space-y-1.5 pt-3">
+                      <Label className="text-xs">البونص (مجاني)</Label>
+                      <Input dir="ltr" type="number" inputMode="decimal" min="0" step="1"
+                        value={r.bonus_quantity}
+                        onChange={(e) => updateRow(i, { bonus_quantity: e.target.value })}
+                        className="h-11 font-mono" />
+                    </div>
+                    <div className="space-y-1.5 pt-3">
+                      <Label className="text-xs">الخصم</Label>
+                      <Input dir="ltr" type="number" inputMode="decimal" min="0" step="0.01"
+                        value={r.discount_amount}
+                        onChange={(e) => updateRow(i, { discount_amount: e.target.value })}
+                        className="h-11 font-mono" />
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between pt-2 border-t">
+                  <span className="text-xs text-muted-foreground">إجمالي السطر</span>
+                  <span className="text-lg font-bold font-mono">{formatMoney(lt)}</span>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+
+        <Button
+          variant="outline"
+          className="w-full h-12 border-dashed"
+          onClick={() => setRows((r) => [...r, emptyRow()])}
+        >
+          <Plus className="h-4 w-4 ms-1" /> إضافة صنف آخر
+        </Button>
+      </div>
+
+      {/* Notes */}
+      <Card className="mt-4">
+        <CardContent className="pt-5">
+          <Label className="text-xs">ملاحظات (اختياري)</Label>
+          <Textarea
+            className="mt-1.5"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={2}
+            placeholder="أي بيان إضافي يظهر بالفاتورة…"
+          />
+        </CardContent>
+      </Card>
+
+      {/* Sticky bottom bar: totals + save */}
+      <div className="fixed bottom-0 inset-x-0 z-30 bg-background/95 backdrop-blur border-t shadow-lg">
+        <div className="max-w-3xl mx-auto p-3 sm:p-4">
+          <div className="flex items-center justify-between gap-3 mb-2 text-sm">
+            <div className="flex items-center gap-3 text-muted-foreground">
+              <span>{filledCount} صنف</span>
+              {totals.discount_total > 0 && (
+                <span className="text-destructive">خصم {formatMoney(totals.discount_total)}</span>
+              )}
+            </div>
+            <div className="text-end">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">الصافي</div>
+              <div className="text-xl font-black font-mono">{formatMoney(totals.total)}</div>
+            </div>
+          </div>
+          <Button
+            size="lg"
+            className="w-full h-12 text-base"
+            disabled={!canSubmit || m.isPending}
+            onClick={() => m.mutate()}
+          >
+            <Check className="h-5 w-5 ms-2" />
+            {m.isPending ? "جاري الحفظ…" : "حفظ الفاتورة"}
           </Button>
-        </CardHeader>
-        <CardContent className="p-0 overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>الصنف</TableHead>
-                <TableHead className="w-24">الكمية</TableHead>
-                <TableHead className="w-24">البونص</TableHead>
-                <TableHead className="w-28">سعر الوحدة</TableHead>
-                <TableHead className="w-28">الخصم</TableHead>
-                <TableHead className="w-28 text-end">الإجمالي</TableHead>
-                <TableHead className="w-10"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((r, i) => {
-                const lt = computeLineTotal({
-                  sold_quantity: Number(r.sold_quantity) || 0,
-                  unit_price: Number(r.unit_price) || 0,
-                  discount_amount: Number(r.discount_amount) || 0,
-                });
-                return (
-                  <TableRow key={i}>
-                    <TableCell><Input value={r.item_name} onChange={(e) => updateRow(i, { item_name: e.target.value })} /></TableCell>
-                    <TableCell><Input dir="ltr" type="number" min="0" step="0.001" value={r.sold_quantity} onChange={(e) => updateRow(i, { sold_quantity: e.target.value })} /></TableCell>
-                    <TableCell><Input dir="ltr" type="number" min="0" step="0.001" value={r.bonus_quantity} onChange={(e) => updateRow(i, { bonus_quantity: e.target.value })} /></TableCell>
-                    <TableCell><Input dir="ltr" type="number" min="0" step="0.01" value={r.unit_price} onChange={(e) => updateRow(i, { unit_price: e.target.value })} /></TableCell>
-                    <TableCell><Input dir="ltr" type="number" min="0" step="0.01" value={r.discount_amount} onChange={(e) => updateRow(i, { discount_amount: e.target.value })} /></TableCell>
-                    <TableCell className="text-end font-mono">{formatMoney(lt)}</TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="icon" onClick={() => setRows((rs) => rs.filter((_, idx) => idx !== i))} disabled={rows.length === 1}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="pt-6 space-y-4">
-          <div className="space-y-1.5">
-            <Label>ملاحظات</Label>
-            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
-          </div>
-          <div className="grid sm:grid-cols-3 gap-3 pt-2 border-t">
-            <Totals label="المجموع" value={totals.subtotal} />
-            <Totals label="الخصم" value={totals.discount_total} />
-            <Totals label="الصافي" value={totals.total} highlight />
-          </div>
-          <p className="text-xs text-muted-foreground">
-            ملاحظة: كمية البونص لا تُحتسب ماليًا — تكلفتها على العميل = 0، وتُسجَّل فقط للظهور بالفاتورة وخصم المخزون.
-          </p>
-          <div className="flex justify-end">
-            <Button size="lg" disabled={!canSubmit || m.isPending} onClick={() => m.mutate()}>
-              {m.isPending ? "جاري الحفظ…" : "حفظ الفاتورة"}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-function Totals({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) {
-  return (
-    <div className={"rounded-lg border p-3 " + (highlight ? "border-primary bg-primary/5" : "")}>
-      <div className="text-sm text-muted-foreground">{label}</div>
-      <div className={"text-xl font-bold font-mono " + (highlight ? "text-primary" : "")}>{formatMoney(value)}</div>
+        </div>
+      </div>
     </div>
   );
 }
