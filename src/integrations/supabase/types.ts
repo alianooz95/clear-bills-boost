@@ -50,35 +50,83 @@ export type Database = {
         }
         Relationships: []
       }
+      inventory_items: {
+        Row: {
+          batch_number: string | null
+          created_at: string
+          expiry_date: string | null
+          id: string
+          name: string
+          owner_id: string
+          unit: string | null
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          batch_number?: string | null
+          created_at?: string
+          expiry_date?: string | null
+          id?: string
+          name: string
+          owner_id: string
+          unit?: string | null
+          unit_price?: number
+          updated_at?: string
+        }
+        Update: {
+          batch_number?: string | null
+          created_at?: string
+          expiry_date?: string | null
+          id?: string
+          name?: string
+          owner_id?: string
+          unit?: string | null
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       invoice_items: {
         Row: {
+          batch_number: string | null
           bonus_quantity: number
           discount_amount: number
+          expiry_date: string | null
           id: string
+          inventory_item_id: string | null
           invoice_id: string
           item_name: string
           line_total: number
           sold_quantity: number
+          unit: string | null
           unit_price: number
         }
         Insert: {
+          batch_number?: string | null
           bonus_quantity?: number
           discount_amount?: number
+          expiry_date?: string | null
           id?: string
+          inventory_item_id?: string | null
           invoice_id: string
           item_name: string
           line_total?: number
           sold_quantity?: number
+          unit?: string | null
           unit_price?: number
         }
         Update: {
+          batch_number?: string | null
           bonus_quantity?: number
           discount_amount?: number
+          expiry_date?: string | null
           id?: string
+          inventory_item_id?: string | null
           invoice_id?: string
           item_name?: string
           line_total?: number
           sold_quantity?: number
+          unit?: string | null
           unit_price?: number
         }
         Relationships: [
