@@ -8,6 +8,10 @@ const ItemSchema = z.object({
   bonus_quantity: z.number().min(0).default(0),
   unit_price: z.number().min(0),
   discount_amount: z.number().min(0).default(0),
+  inventory_item_id: z.string().uuid().optional().nullable(),
+  batch_number: z.string().max(100).optional().nullable(),
+  expiry_date: z.string().optional().nullable(),
+  unit: z.string().max(50).optional().nullable(),
 });
 
 const CreateInvoiceInput = z.object({
@@ -90,6 +94,10 @@ export const createInvoice = createServerFn({ method: "POST" })
       bonus_quantity: it.bonus_quantity,
       unit_price: it.unit_price,
       discount_amount: it.discount_amount,
+      inventory_item_id: it.inventory_item_id || null,
+      batch_number: it.batch_number || null,
+      expiry_date: it.expiry_date || null,
+      unit: it.unit || null,
     }));
 
     const { error: itErr } = await context.supabase.from("invoice_items").insert(itemsPayload);
