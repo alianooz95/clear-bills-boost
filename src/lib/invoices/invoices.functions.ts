@@ -24,7 +24,10 @@ const CreateInvoiceInput = z.object({
 
 export const listInvoices = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { customer_id?: string } | undefined) => data ?? {})
+  .inputValidator(
+    (data: { customer_id?: string; invoice_type?: "sales" | "credit_note" | "quotation" } | undefined) =>
+      data ?? {},
+  )
   .handler(async ({ data, context }) => {
     let q = context.supabase
       .from("invoices")
@@ -33,6 +36,7 @@ export const listInvoices = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false })
       .limit(500);
     if (data.customer_id) q = q.eq("customer_id", data.customer_id);
+    if (data.invoice_type) q = q.eq("invoice_type", data.invoice_type);
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
     return rows ?? [];
@@ -117,4 +121,59 @@ export const deleteInvoice = createServerFn({ method: "POST" })
     const { error } = await context.supabase.from("invoices").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+export const convertQuotationToInvoice = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { id: string }) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { data: src, error } = await context.supabase
+      .from("invoices")
+      .select("*, invoice_items(*)")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!src) throw new Error("الفاتورة غير موجودة");
+    if (src.invoice_type !== "quotation") throw new Error("هذه ليست عرض سعر");
+
+    const { data: numData, error: nErr } = await context.supabase.rpc("generate_invoice_number", {
+      p_type: "sales",
+    });
+    if (nErr) throw new Error(nErr.message);
+    const invoiceNumber = numData as unknown as string;
+
+    const { data: inv, error: iErr } = await context.supabase
+      .from("invoices")
+      .insert({
+        owner_id: context.userId,
+        customer_id: src.customer_id,
+        invoice_number: invoiceNumber,
+        invoice_type: "sales",
+        invoice_date: new Date().toISOString().slice(0, 10),
+        notes: src.notes,
+      })
+      .select("*")
+      .single();
+    if (iErr) throw new Error(iErr.message);
+
+    const itemsPayload = (src.invoice_items ?? []).map((it: any) => ({
+      invoice_id: inv.id,
+      item_name: it.item_name,
+      sold_quantity: it.sold_quantity,
+      bonus_quantity: it.bonus_quantity,
+      unit_price: it.unit_price,
+      discount_amount: it.discount_amount,
+      inventory_item_id: it.inventory_item_id,
+      batch_number: it.batch_number,
+      expiry_date: it.expiry_date,
+      unit: it.unit,
+    }));
+    if (itemsPayload.length) {
+      const { error: itErr } = await context.supabase.from("invoice_items").insert(itemsPayload);
+      if (itErr) {
+        await context.supabase.from("invoices").delete().eq("id", inv.id);
+        throw new Error(itErr.message);
+      }
+    }
+    return { id: inv.id, invoice_number: invoiceNumber };
   });
