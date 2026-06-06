@@ -1,9 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getInvoice, deleteInvoice } from "@/lib/invoices/invoices.functions";
+import { getInvoice, deleteInvoice, convertQuotationToInvoice } from "@/lib/invoices/invoices.functions";
 import { Button } from "@/components/ui/button";
-import { Printer, Trash2 } from "lucide-react";
+import { Printer, Trash2, FileCheck2 } from "lucide-react";
 import { formatMoney } from "@/lib/invoices/invoice-math";
 import { tafqeet } from "@/lib/invoices/tafqeet";
 import { toast } from "sonner";
@@ -19,6 +19,7 @@ function InvoiceDetail() {
   const qc = useQueryClient();
   const fn = useServerFn(getInvoice);
   const delFn = useServerFn(deleteInvoice);
+  const convertFn = useServerFn(convertQuotationToInvoice);
 
   const { data, isLoading } = useQuery({
     queryKey: ["invoice", id],
@@ -31,6 +32,16 @@ function InvoiceDetail() {
       toast.success("تم حذف الفاتورة");
       qc.invalidateQueries();
       navigate({ to: "/invoices" });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const convert = useMutation({
+    mutationFn: () => convertFn({ data: { id } }),
+    onSuccess: (res: any) => {
+      toast.success(`تم إنشاء فاتورة مبيعات ${res.invoice_number}`);
+      qc.invalidateQueries();
+      navigate({ to: "/invoices/$id", params: { id: res.id } });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -69,6 +80,11 @@ function InvoiceDetail() {
           <h1 className="text-2xl font-bold mt-1">{inv.invoice_number}</h1>
         </div>
         <div className="flex gap-2">
+          {isQuotation && (
+            <Button variant="default" onClick={() => convert.mutate()} disabled={convert.isPending}>
+              <FileCheck2 className="h-4 w-4 ms-1" /> تحويل إلى فاتورة مبيعات
+            </Button>
+          )}
           <Button variant="outline" onClick={() => window.print()}>
             <Printer className="h-4 w-4 ms-1" /> طباعة / حفظ PDF
           </Button>
