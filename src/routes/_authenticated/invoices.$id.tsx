@@ -39,9 +39,14 @@ function InvoiceDetail() {
   if (!data) return null;
 
   const inv: any = data;
-  const isSales = inv.invoice_type === "sales";
   const items = inv.invoice_items ?? [];
-  const invoiceTypeLabel = isSales ? "فاتورة مبيعات — نقدي معلق" : "فاتورة مرتجع / تعويضية";
+  const isQuotation = inv.invoice_type === "quotation";
+  const invoiceTypeLabel =
+    inv.invoice_type === "sales"
+      ? "فاتورة مبيعات — نقدي معلق"
+      : isQuotation
+      ? "عرض سعر — Quotation"
+      : "فاتورة مرتجع / تعويضية";
 
   // Company / branch info (static placeholders — can be moved to settings later)
   const company = {
@@ -164,6 +169,12 @@ function InvoiceDetail() {
         {/* Terms */}
         <div className="inv-terms">
           <ol>
+            {isQuotation && (
+              <>
+                <li>هذا المستند عرض سعر فقط ولا يُعدّ فاتورة ضريبية ولا يُلزم بالبيع.</li>
+                <li>الأسعار سارية لمدة 7 أيام من تاريخ العرض ما لم يُذكر خلاف ذلك.</li>
+              </>
+            )}
             <li>أصناف الثلاجة غير قابلة للإرجاع أو الاستبدال بعد خروجها من المخزن.</li>
             <li>الالتزام بسداد القيمة بموجب سندات القبض الرسمية الصادرة من المحاسبة.</li>
             <li>أي ملاحظات على الفاتورة يجب إبلاغها خلال 24 ساعة من الاستلام.</li>

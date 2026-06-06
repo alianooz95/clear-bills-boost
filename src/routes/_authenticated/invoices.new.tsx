@@ -60,7 +60,7 @@ function NewInvoicePage() {
   });
 
   const [customerId, setCustomerId] = useState<string>(presetCustomer ?? "");
-  const [type, setType] = useState<"sales" | "credit_note">("sales");
+  const [type, setType] = useState<"sales" | "credit_note" | "quotation">("sales");
   const [date, setDate] = useState<string>(new Date().toISOString().slice(0, 10));
   const [notes, setNotes] = useState("");
   const [rows, setRows] = useState<Row[]>([emptyRow()]);
@@ -123,20 +123,27 @@ function NewInvoicePage() {
       <Card className="mb-4">
         <CardContent className="pt-5 space-y-4">
           {/* Segmented invoice type */}
-          <div className="grid grid-cols-2 gap-2 p-1 bg-muted rounded-lg">
+          <div className="grid grid-cols-3 gap-2 p-1 bg-muted rounded-lg">
             <button
               type="button"
               onClick={() => setType("sales")}
-              className={`py-2.5 rounded-md text-sm font-semibold transition ${type === "sales" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
+              className={`py-2.5 rounded-md text-xs sm:text-sm font-semibold transition ${type === "sales" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
             >
               مبيعات
             </button>
             <button
               type="button"
-              onClick={() => setType("credit_note")}
-              className={`py-2.5 rounded-md text-sm font-semibold transition ${type === "credit_note" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
+              onClick={() => setType("quotation")}
+              className={`py-2.5 rounded-md text-xs sm:text-sm font-semibold transition ${type === "quotation" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
             >
-              تعويضية / مرتجع
+              عرض سعر
+            </button>
+            <button
+              type="button"
+              onClick={() => setType("credit_note")}
+              className={`py-2.5 rounded-md text-xs sm:text-sm font-semibold transition ${type === "credit_note" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
+            >
+              مرتجع
             </button>
           </div>
 

@@ -16,7 +16,7 @@ const ItemSchema = z.object({
 
 const CreateInvoiceInput = z.object({
   customer_id: z.string().uuid(),
-  invoice_type: z.enum(["sales", "credit_note"]),
+  invoice_type: z.enum(["sales", "credit_note", "quotation"]),
   invoice_date: z.string().min(1),
   notes: z.string().max(1000).optional().nullable(),
   items: z.array(ItemSchema).min(1),

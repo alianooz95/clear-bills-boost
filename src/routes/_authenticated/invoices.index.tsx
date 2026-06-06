@@ -51,8 +51,8 @@ function InvoicesPage() {
                   <TableCell dir="ltr" className="text-start">{inv.invoice_date}</TableCell>
                   <TableCell>{inv.customers?.name ?? "—"}</TableCell>
                   <TableCell>
-                    <Badge variant={inv.invoice_type === "sales" ? "default" : "secondary"}>
-                      {inv.invoice_type === "sales" ? "مبيعات" : "تعويضية"}
+                    <Badge variant={inv.invoice_type === "sales" ? "default" : inv.invoice_type === "quotation" ? "outline" : "secondary"}>
+                      {inv.invoice_type === "sales" ? "مبيعات" : inv.invoice_type === "quotation" ? "عرض سعر" : "تعويضية"}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-end font-mono">{formatMoney(inv.total)}</TableCell>
