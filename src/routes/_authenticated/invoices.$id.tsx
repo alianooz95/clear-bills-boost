@@ -7,6 +7,7 @@ import { Printer, Trash2, FileCheck2 } from "lucide-react";
 import { formatMoney } from "@/lib/invoices/invoice-math";
 import { tafqeet } from "@/lib/invoices/tafqeet";
 import { toast } from "sonner";
+import oplusLogo from "@/assets/oplus-logo.png.asset.json";
 
 export const Route = createFileRoute("/_authenticated/invoices/$id")({
   head: () => ({ meta: [{ title: "تفاصيل الفاتورة" }] }),
@@ -69,8 +70,8 @@ function InvoiceDetail() {
 
   // Company / branch info (static placeholders — can be moved to settings later)
   const company = {
-    nameAr: "محلات الأيهم والهدى للأدوية والمستلزمات الطبية",
-    nameEn: "AL-Ayham and Al-huda Stores",
+    nameAr: "شركة أو بلس فارما للأدوية",
+    nameEn: "Oplus Pharmaceuticals",
     phone: "+967 777 000 000",
     address: "صنعاء — شارع الزبيري",
     branch: "الفرع الرئيسي",
@@ -110,12 +111,14 @@ function InvoiceDetail() {
         <div className="inv-header">
           <div>
             <div className="name-ar">{company.nameAr}</div>
-            <div className="inv-sub" style={{ textAlign: "right" }}>للأدوية والمستلزمات الطبية</div>
+            <div className="inv-sub" style={{ textAlign: "right" }}>صحة أفضل. حياة أفضل.</div>
           </div>
-          <div className="logo">A&H</div>
+          <div className="logo-img">
+            <img src={oplusLogo.url} alt="Oplus Pharmaceuticals" />
+          </div>
           <div>
             <div className="name-en">{company.nameEn}</div>
-            <div className="inv-sub" style={{ textAlign: "left", direction: "ltr" }}>Pharmaceuticals &amp; Medical Supplies</div>
+            <div className="inv-sub" style={{ textAlign: "left", direction: "ltr" }}>Better Health. Better Life.</div>
           </div>
         </div>
 
