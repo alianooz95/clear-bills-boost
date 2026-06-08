@@ -360,6 +360,47 @@
   .inv-sign { grid-template-columns: repeat(4, 1fr) !important; gap: 16px !important; }
 }
 
+/* Page-break rules for print */
+@media print {
+  /* Repeat table head on every printed page, never repeat tbody/tfoot */
+  .inv-table { page-break-inside: auto; }
+  .inv-table thead { display: table-header-group; }
+  .inv-table tfoot { display: table-footer-group; }
+  /* Don't split a single row across pages */
+  .inv-table tr,
+  .inv-table th,
+  .inv-table td {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  /* Keep the company/meta/customer header block together (no repeat across pages) */
+  .inv-header,
+  .inv-meta,
+  .inv-type,
+  .inv-customer {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  /* Totals / tafqeet / terms / signatures must stay intact at the end */
+  .inv-totals-row,
+  .inv-tafqeet,
+  .inv-terms,
+  .inv-sign,
+  .inv-pagefoot {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  /* Force signatures + footer to start on a fresh page only if no room */
+  .inv-sign { page-break-before: auto; break-before: auto; }
+  /* Avoid orphan/widow rows */
+  .inv-table tr { orphans: 2; widows: 2; }
+  /* Allow the sheet itself to grow across pages instead of being clipped to one */
+  .inv-sheet {
+    min-height: auto !important;
+    page-break-after: auto !important;
+  }
+}
+
 /* Screen-only: allow horizontal scroll wrapper and scale on small screens */
 @media screen {
   .inv-sheet { min-height: auto; }
