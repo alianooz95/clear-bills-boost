@@ -362,8 +362,9 @@
   .inv-customer { grid-template-columns: 1fr; }
   .inv-customer > div + div { border-inline-start: 0; border-top: 1px solid var(--inv-line); }
   .inv-sign { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .inv-table { font-size: 10px; }
-  .inv-table th, .inv-table td { padding: 3px 2px; }
-  .inv-table td.name { min-width: 0; }
+  .inv-table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .inv-table { font-size: 10.5px; min-width: 560px; }
+  .inv-table th, .inv-table td { padding: 4px 4px; }
+  .inv-table td.name { min-width: 120px; }
   .inv-totals-row { font-size: 11px; }
 }

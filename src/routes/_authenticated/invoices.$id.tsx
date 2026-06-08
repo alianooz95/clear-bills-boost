@@ -151,6 +151,7 @@ function InvoiceDetail() {
         </div>
 
         {/* Items table */}
+        <div className="inv-table-wrap">
         <table className="inv-table">
           <thead>
             <tr>
@@ -179,6 +180,7 @@ function InvoiceDetail() {
             ))}
           </tbody>
         </table>
+        </div>
 
         {/* Totals row */}
         <div className="inv-totals-row">
