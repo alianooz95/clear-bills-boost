@@ -196,28 +196,45 @@ function InvoiceDetail() {
           <b>التفقيط:</b> {tafqeet(inv.total, "ريال يمني")}
         </div>
 
-        {/* Terms */}
-        <div className="inv-terms">
-          <ol>
-            {isQuotation && (
-              <>
-                <li>هذا المستند عرض سعر فقط ولا يُعدّ فاتورة ضريبية ولا يُلزم بالبيع.</li>
-                <li>الأسعار سارية لمدة 7 أيام من تاريخ العرض ما لم يُذكر خلاف ذلك.</li>
-              </>
-            )}
-            <li>أصناف الثلاجة غير قابلة للإرجاع أو الاستبدال بعد خروجها من المخزن.</li>
-            <li>الالتزام بسداد القيمة بموجب سندات القبض الرسمية الصادرة من المحاسبة.</li>
-            <li>أي ملاحظات على الفاتورة يجب إبلاغها خلال 24 ساعة من الاستلام.</li>
-            <li>الأسعار المذكورة بالريال اليمني وتشمل جميع التكاليف ما لم يُذكر خلاف ذلك.</li>
-          </ol>
-        </div>
+        {/* Footer block: Terms + Payment + Signatures (kept together for print) */}
+        <div className="inv-footer">
+          <div className="inv-footer-grid">
+            <section className="inv-terms">
+              <h4>الشروط والأحكام</h4>
+              <ol>
+                {isQuotation && (
+                  <>
+                    <li>هذا المستند عرض سعر فقط ولا يُعدّ فاتورة ضريبية ولا يُلزم بالبيع.</li>
+                    <li>الأسعار سارية لمدة 7 أيام من تاريخ العرض ما لم يُذكر خلاف ذلك.</li>
+                  </>
+                )}
+                <li>أصناف الثلاجة غير قابلة للإرجاع أو الاستبدال بعد خروجها من المخزن.</li>
+                <li>الالتزام بسداد القيمة بموجب سندات القبض الرسمية الصادرة من المحاسبة.</li>
+                <li>أي ملاحظات على الفاتورة يجب إبلاغها خلال 24 ساعة من الاستلام.</li>
+                <li>الأسعار بالريال اليمني وتشمل جميع التكاليف ما لم يُذكر خلاف ذلك.</li>
+              </ol>
+            </section>
 
-        {/* Signatures */}
-        <div className="inv-sign">
-          <div><div className="line" />اسم المستلم وتوقيعه</div>
-          <div><div className="line" />المبيعات</div>
-          <div><div className="line" />المخازن</div>
-          <div><div className="line" />المحاسب</div>
+            <section className="inv-pay">
+              <h4>طرق الدفع</h4>
+              <ul>
+                <li><b>نقداً:</b> في مقر الشركة عند الاستلام.</li>
+                <li><b>تحويل بنكي:</b> بنك الكريمي — حساب رقم <span dir="ltr">SA00 0000 0000 0000 0000</span></li>
+                <li><b>محافظ إلكترونية:</b> فلوسك / جيب / كاش — باسم Oplus Pharma</li>
+                <li><b>شيك مصدّق:</b> باسم شركة أو بلس فارما للأدوية.</li>
+              </ul>
+              <div className="inv-pay-note">
+                يُرجى إرفاق إيصال التحويل عند السداد، والاحتفاظ بسند القبض الرسمي.
+              </div>
+            </section>
+          </div>
+
+          <div className="inv-sign">
+            <div><div className="line" />اسم المستلم وتوقيعه</div>
+            <div><div className="line" />المبيعات</div>
+            <div><div className="line" />المخازن</div>
+            <div><div className="line" />المحاسب</div>
+          </div>
         </div>
 
         {/* Page footer */}
