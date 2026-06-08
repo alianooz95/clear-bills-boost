@@ -335,3 +335,23 @@
   /* Ensure backgrounds (gray header rows, zebra) print on Chrome */
   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 }
+
+/* Screen-only: allow horizontal scroll wrapper and scale on small screens */
+.inv-font {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 12px;
+}
+@media screen and (max-width: 820px) {
+  .inv-sheet {
+    transform: scale(var(--inv-scale, 0.48));
+    transform-origin: top center;
+    margin-bottom: calc(297mm * (var(--inv-scale, 0.48) - 1));
+  }
+}
+@media screen and (max-width: 500px) {
+  .inv-sheet { --inv-scale: 0.42; }
+}
+@media screen and (max-width: 380px) {
+  .inv-sheet { --inv-scale: 0.36; }
+}
