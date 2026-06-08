@@ -150,7 +150,9 @@ export const convertQuotationToInvoice = createServerFn({ method: "POST" })
         invoice_number: invoiceNumber,
         invoice_type: "sales",
         invoice_date: new Date().toISOString().slice(0, 10),
-        notes: src.notes,
+        notes: [src.notes, `محوّل من عرض السعر ${src.invoice_number}`]
+          .filter(Boolean)
+          .join(" — "),
       })
       .select("*")
       .single();
