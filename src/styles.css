@@ -475,4 +475,5 @@
   .inv-table th, .inv-table td { padding: 4px 4px; }
   .inv-table td.name { min-width: 120px; }
   .inv-totals-row { font-size: 11px; }
+  .inv-footer-grid { grid-template-columns: 1fr; gap: 8px; }
 }
