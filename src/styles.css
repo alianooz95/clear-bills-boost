@@ -173,6 +173,11 @@
   flex-direction: column;
 }
 
+/* On screen, allow sheet to shrink to content; A4 size enforced only for print */
+@media screen {
+  .inv-sheet { min-height: auto; }
+}
+
 /* Top header: 3 columns */
 .inv-header {
   display: grid;
