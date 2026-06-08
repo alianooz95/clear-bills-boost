@@ -52,11 +52,19 @@ function InvoiceDetail() {
   const inv: any = data;
   const items = inv.invoice_items ?? [];
   const isQuotation = inv.invoice_type === "quotation";
+  const createdAt = inv.created_at ? new Date(inv.created_at) : null;
+  const validUntil = isQuotation
+    ? new Date(new Date(inv.invoice_date).getTime() + 7 * 86400000)
+    : null;
+  const ageDays = isQuotation
+    ? Math.floor((Date.now() - new Date(inv.invoice_date).getTime()) / 86400000)
+    : 0;
+  const isExpired = isQuotation && ageDays > 7;
   const invoiceTypeLabel =
     inv.invoice_type === "sales"
       ? "فاتورة مبيعات — نقدي معلق"
       : isQuotation
-      ? "عرض سعر — Quotation"
+      ? `عرض سعر — Quotation ${isExpired ? "(منتهي)" : "(ساري)"}`
       : "فاتورة مرتجع / تعويضية";
 
   // Company / branch info (static placeholders — can be moved to settings later)
@@ -115,8 +123,15 @@ function InvoiceDetail() {
         <div className="inv-meta">
           <div><b>الهاتف:</b> <span dir="ltr">{company.phone}</span></div>
           <div><b>العنوان:</b> {company.address}</div>
-          <div><b>تاريخ الفاتورة:</b> <span dir="ltr">{inv.invoice_date}</span></div>
-          <div><b>رقم الفاتورة:</b> <span dir="ltr">{inv.invoice_number}</span></div>
+          <div><b>{isQuotation ? "تاريخ العرض:" : "تاريخ الفاتورة:"}</b> <span dir="ltr">{inv.invoice_date}</span></div>
+          <div><b>{isQuotation ? "رقم العرض:" : "رقم الفاتورة:"}</b> <span dir="ltr">{inv.invoice_number}</span></div>
+          {isQuotation && validUntil && (
+            <>
+              <div><b>تاريخ الإنشاء:</b> <span dir="ltr">{createdAt?.toISOString().slice(0, 10)}</span></div>
+              <div><b>صالح حتى:</b> <span dir="ltr">{validUntil.toISOString().slice(0, 10)}</span></div>
+              <div><b>الحالة:</b> {isExpired ? "منتهي الصلاحية" : "ساري"}</div>
+            </>
+          )}
           <div><b>فرع البيع:</b> {company.branch}</div>
           <div><b>اسم المخزن:</b> {company.warehouse}</div>
           <div><b>مدخل الفاتورة:</b> {company.enteredBy}</div>
