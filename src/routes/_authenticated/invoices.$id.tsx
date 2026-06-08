@@ -177,12 +177,6 @@ function InvoiceDetail() {
                 <td className="mono">{formatMoney(it.line_total)}</td>
               </tr>
             ))}
-            {/* Padding rows to keep layout stable when few items */}
-            {Array.from({ length: Math.max(0, 8 - items.length) }).map((_, i) => (
-              <tr key={`pad-${i}`}>
-                <td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
-              </tr>
-            ))}
           </tbody>
         </table>
 
