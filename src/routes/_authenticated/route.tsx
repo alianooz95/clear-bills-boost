@@ -24,7 +24,7 @@ function AuthedLayout() {
       <header className="border-b sticky top-0 bg-background/80 backdrop-blur z-10 print:hidden">
         <div className="container mx-auto px-4 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-1">
-            <Link to="/customers" className="font-bold text-lg">نظام الفواتير</Link>
+            <Link to="/customers" className="font-bold text-lg">Oplus Pharma</Link>
           </div>
           <nav className="flex items-center gap-1">
             <Link to="/customers">

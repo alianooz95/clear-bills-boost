@@ -11,7 +11,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { ensureDemoUser } from "@/lib/auth/demo.functions";
 
 export const Route = createFileRoute("/auth")({
-  head: () => ({ meta: [{ title: "تسجيل الدخول — نظام الفواتير" }] }),
+  head: () => ({ meta: [{ title: "تسجيل الدخول — Oplus Pharma" }] }),
   component: AuthPage,
 });
 
@@ -71,7 +71,7 @@ function AuthPage() {
     <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl">نظام الفواتير والعملاء</CardTitle>
+          <CardTitle className="text-2xl">Oplus Pharma — نظام الفواتير</CardTitle>
           <CardDescription>سجّل الدخول أو أنشئ حسابًا للمتابعة.</CardDescription>
         </CardHeader>
         <CardContent>
