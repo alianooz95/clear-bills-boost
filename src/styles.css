@@ -300,11 +300,46 @@
   margin-top: 8px;
   font-size: 10.5px;
   color: #222;
-  border-top: 1px dashed var(--inv-thin);
-  padding-top: 6px;
 }
 .inv-terms ol { padding-inline-start: 18px; margin: 0; }
 .inv-terms li { margin-bottom: 2px; }
+
+/* Unified footer block: terms + payment + signatures */
+.inv-footer {
+  margin-top: 8px;
+  border-top: 1px dashed var(--inv-thin);
+  padding-top: 6px;
+}
+.inv-footer-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 12px;
+}
+.inv-footer-grid > section {
+  border: 1px solid var(--inv-thin);
+  border-radius: 4px;
+  padding: 6px 10px;
+  background: #fafafa;
+}
+.inv-footer-grid h4 {
+  margin: 0 0 4px;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid var(--inv-thin);
+  padding-bottom: 3px;
+}
+.inv-pay { font-size: 10.5px; color: #222; }
+.inv-pay ul { padding-inline-start: 16px; margin: 0; list-style: disc; }
+.inv-pay li { margin-bottom: 2px; }
+.inv-pay-note {
+  margin-top: 5px;
+  padding-top: 4px;
+  border-top: 1px dashed var(--inv-thin);
+  font-size: 10px;
+  color: var(--inv-soft);
+  font-style: italic;
+}
 
 /* Signatures */
 .inv-sign {
@@ -394,10 +429,15 @@
   .inv-tafqeet,
   .inv-terms,
   .inv-sign,
-  .inv-pagefoot {
+  .inv-pagefoot,
+  .inv-footer,
+  .inv-footer-grid,
+  .inv-footer-grid > section,
+  .inv-pay {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
   }
+  .inv-footer-grid { grid-template-columns: 1.2fr 1fr !important; gap: 12px !important; }
   /* Force signatures + footer to start on a fresh page only if no room */
   .inv-sign { page-break-before: auto; break-before: auto; }
   /* Avoid orphan/widow rows */
@@ -435,4 +475,5 @@
   .inv-table th, .inv-table td { padding: 4px 4px; }
   .inv-table td.name { min-width: 120px; }
   .inv-totals-row { font-size: 11px; }
+  .inv-footer-grid { grid-template-columns: 1fr; gap: 8px; }
 }
