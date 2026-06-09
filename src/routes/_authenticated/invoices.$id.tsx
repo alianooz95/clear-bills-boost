@@ -107,51 +107,57 @@ function InvoiceDetail() {
 
       {/* A4 Sheet */}
       <div className="inv-sheet">
-        {/* Header: company name AR | logo | company name EN */}
-        <div className="inv-header">
-          <div>
-            <div className="name-ar">{company.nameAr}</div>
-            <div className="inv-sub" style={{ textAlign: "right" }}>صحة أفضل. حياة أفضل.</div>
+        {/* Editorial brand band */}
+        <header className="inv-band">
+          <div className="inv-band-left">
+            <div className="inv-band-logo">
+              <img src={oplusLogo.url} alt="Oplus Pharmaceuticals" />
+            </div>
+            <div>
+              <div className="inv-band-name-ar">{company.nameAr}</div>
+              <div className="inv-band-name-en">{company.nameEn}</div>
+              <div className="inv-band-tag">صحة أفضل · حياة أفضل · Better Health · Better Life</div>
+            </div>
           </div>
-          <div className="logo-img">
-            <img src={oplusLogo.url} alt="Oplus Pharmaceuticals" />
+          <div className="inv-band-right">
+            <div className="inv-band-kicker">{isQuotation ? "QUOTATION · عرض سعر" : "INVOICE · فاتورة"}</div>
+            <div className="inv-band-num" dir="ltr">{inv.invoice_number}</div>
+            <div className="inv-band-date">
+              <span>{isQuotation ? "تاريخ العرض" : "تاريخ الفاتورة"}</span>
+              <b dir="ltr">{inv.invoice_date}</b>
+            </div>
           </div>
-          <div>
-            <div className="name-en">{company.nameEn}</div>
-            <div className="inv-sub" style={{ textAlign: "left", direction: "ltr" }}>Better Health. Better Life.</div>
-          </div>
-        </div>
+        </header>
 
-        {/* Meta grid */}
-        <div className="inv-meta">
-          <div><b>الهاتف:</b> <span dir="ltr">{company.phone}</span></div>
-          <div><b>العنوان:</b> {company.address}</div>
-          <div><b>{isQuotation ? "تاريخ العرض:" : "تاريخ الفاتورة:"}</b> <span dir="ltr">{inv.invoice_date}</span></div>
-          <div><b>{isQuotation ? "رقم العرض:" : "رقم الفاتورة:"}</b> <span dir="ltr">{inv.invoice_number}</span></div>
-          {isQuotation && validUntil && (
-            <>
-              <div><b>تاريخ الإنشاء:</b> <span dir="ltr">{createdAt?.toISOString().slice(0, 10)}</span></div>
-              <div><b>صالح حتى:</b> <span dir="ltr">{validUntil.toISOString().slice(0, 10)}</span></div>
-              <div><b>الحالة:</b> {isExpired ? "منتهي الصلاحية" : "ساري"}</div>
-            </>
-          )}
-          <div><b>فرع البيع:</b> {company.branch}</div>
-          <div><b>اسم المخزن:</b> {company.warehouse}</div>
-          <div><b>مدخل الفاتورة:</b> {company.enteredBy}</div>
-          <div><b>رقم النسخة:</b> {company.copyNo}</div>
-        </div>
-
-        {/* Invoice type banner */}
-        <div className="inv-type">{invoiceTypeLabel}</div>
-
-        {/* Customer line */}
-        <div className="inv-customer">
-          <div><b>المطلوب من الأخوة:</b> {inv.customers?.name ?? "—"}</div>
-          <div><b>عميل رقم:</b> <span dir="ltr">{(inv.customers?.id ?? "").slice(0, 8).toUpperCase()}</span></div>
-          <div className="note">
-            <b>البيان:</b> {inv.notes || "بدون مرتجع بعد خروج البضاعة."}
-          </div>
-        </div>
+        {/* Floating meta cards */}
+        <section className="inv-cards">
+          <article className="inv-card">
+            <h5>الجهة المُصدِرة</h5>
+            <div className="row"><span>الهاتف</span><b dir="ltr">{company.phone}</b></div>
+            <div className="row"><span>العنوان</span><b>{company.address}</b></div>
+            <div className="row"><span>الفرع</span><b>{company.branch}</b></div>
+            <div className="row"><span>المخزن</span><b>{company.warehouse}</b></div>
+          </article>
+          <article className="inv-card">
+            <h5>العميل</h5>
+            <div className="row"><span>المطلوب من</span><b>{inv.customers?.name ?? "—"}</b></div>
+            <div className="row"><span>رقم العميل</span><b dir="ltr">{(inv.customers?.id ?? "").slice(0, 8).toUpperCase()}</b></div>
+            <div className="row"><span>مدخل الفاتورة</span><b>{company.enteredBy}</b></div>
+            <div className="row"><span>رقم النسخة</span><b dir="ltr">{company.copyNo}</b></div>
+          </article>
+          <article className="inv-card inv-card-accent">
+            <h5>التصنيف</h5>
+            <div className="inv-type-pill">{invoiceTypeLabel}</div>
+            {isQuotation && validUntil && (
+              <>
+                <div className="row"><span>تاريخ الإنشاء</span><b dir="ltr">{createdAt?.toISOString().slice(0, 10)}</b></div>
+                <div className="row"><span>صالح حتى</span><b dir="ltr">{validUntil.toISOString().slice(0, 10)}</b></div>
+                <div className="row"><span>الحالة</span><b>{isExpired ? "منتهي الصلاحية" : "ساري"}</b></div>
+              </>
+            )}
+            <div className="row note"><span>البيان</span><b>{inv.notes || "بدون مرتجع بعد خروج البضاعة."}</b></div>
+          </article>
+        </section>
 
         {/* Items table */}
         <div className="inv-table-wrap">
