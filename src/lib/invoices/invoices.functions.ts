@@ -207,3 +207,42 @@ export const convertQuotationToInvoice = createServerFn({ method: "POST" })
     }
     return { id: inv.id, invoice_number: invoiceNumber };
   });
+const PaymentInput = z.object({
+  invoice_id: z.string().uuid(),
+  amount: z.number().positive(),
+  payment_date: z.string().min(1),
+  method: z.string().max(50).optional().nullable(),
+  notes: z.string().max(500).optional().nullable(),
+});
+
+export const addInvoicePayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => PaymentInput.parse(data))
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await context.supabase
+      .from("invoice_payments")
+      .insert({
+        owner_id: context.userId,
+        invoice_id: data.invoice_id,
+        amount: data.amount,
+        payment_date: data.payment_date,
+        method: data.method || null,
+        notes: data.notes || null,
+      })
+      .select("*")
+      .single();
+    if (error) throw new Error(error.message);
+    return row;
+  });
+
+export const deleteInvoicePayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { id: string }) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("invoice_payments")
+      .delete()
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
