@@ -139,17 +139,60 @@ export type Database = {
           },
         ]
       }
+      invoice_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          invoice_id: string
+          method: string | null
+          notes: string | null
+          owner_id: string
+          payment_date: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          invoice_id: string
+          method?: string | null
+          notes?: string | null
+          owner_id: string
+          payment_date?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          method?: string | null
+          notes?: string | null
+          owner_id?: string
+          payment_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           created_at: string
           customer_id: string
           discount_total: number
+          due_date: string | null
           id: string
           invoice_date: string
           invoice_number: string
           invoice_type: Database["public"]["Enums"]["invoice_type"]
           notes: string | null
           owner_id: string
+          payment_type: Database["public"]["Enums"]["payment_type"]
           subtotal: number
           total: number
         }
@@ -157,12 +200,14 @@ export type Database = {
           created_at?: string
           customer_id: string
           discount_total?: number
+          due_date?: string | null
           id?: string
           invoice_date?: string
           invoice_number: string
           invoice_type: Database["public"]["Enums"]["invoice_type"]
           notes?: string | null
           owner_id: string
+          payment_type?: Database["public"]["Enums"]["payment_type"]
           subtotal?: number
           total?: number
         }
@@ -170,12 +215,14 @@ export type Database = {
           created_at?: string
           customer_id?: string
           discount_total?: number
+          due_date?: string | null
           id?: string
           invoice_date?: string
           invoice_number?: string
           invoice_type?: Database["public"]["Enums"]["invoice_type"]
           notes?: string | null
           owner_id?: string
+          payment_type?: Database["public"]["Enums"]["payment_type"]
           subtotal?: number
           total?: number
         }
@@ -207,6 +254,7 @@ export type Database = {
         Args: { p_type: Database["public"]["Enums"]["invoice_type"] }
         Returns: string
       }
+      invoice_paid_total: { Args: { p_invoice: string }; Returns: number }
       recalc_invoice_totals: {
         Args: { p_invoice_id: string }
         Returns: undefined
@@ -214,6 +262,7 @@ export type Database = {
     }
     Enums: {
       invoice_type: "sales" | "credit_note" | "quotation"
+      payment_type: "cash" | "deferred_cash" | "credit"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -342,6 +391,7 @@ export const Constants = {
   public: {
     Enums: {
       invoice_type: ["sales", "credit_note", "quotation"],
+      payment_type: ["cash", "deferred_cash", "credit"],
     },
   },
 } as const
