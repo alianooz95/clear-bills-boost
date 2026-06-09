@@ -107,52 +107,51 @@ function InvoiceDetail() {
 
       {/* A4 Sheet */}
       <div className="inv-sheet">
-        {/* Modern brand header */}
-        <header className="inv-hero">
-          <div className="inv-hero-brand">
-            <div className="inv-hero-logo">
-              <img src={oplusLogo.url} alt="Oplus Pharmaceuticals" />
-            </div>
-            <div className="inv-hero-titles">
-              <div className="name-ar">{company.nameAr}</div>
-              <div className="name-en">{company.nameEn}</div>
-              <div className="tagline">صحة أفضل. حياة أفضل. · Better Health. Better Life.</div>
-            </div>
+        {/* Header: company name AR | logo | company name EN */}
+        <div className="inv-header">
+          <div>
+            <div className="name-ar">{company.nameAr}</div>
+            <div className="inv-sub" style={{ textAlign: "right" }}>صحة أفضل. حياة أفضل.</div>
           </div>
-          <div className="inv-hero-doc">
-            <div className="inv-doc-type">{invoiceTypeLabel}</div>
-            <div className="inv-doc-no">
-              <span>{isQuotation ? "رقم العرض" : "رقم الفاتورة"}</span>
-              <b dir="ltr">{inv.invoice_number}</b>
-            </div>
-            <div className="inv-doc-date">
-              <span>{isQuotation ? "تاريخ العرض" : "التاريخ"}</span>
-              <b dir="ltr">{inv.invoice_date}</b>
-            </div>
+          <div className="logo-img">
+            <img src={oplusLogo.url} alt="Oplus Pharmaceuticals" />
           </div>
-        </header>
+          <div>
+            <div className="name-en">{company.nameEn}</div>
+            <div className="inv-sub" style={{ textAlign: "left", direction: "ltr" }}>Better Health. Better Life.</div>
+          </div>
+        </div>
 
-        {/* Bill-to + Company info cards */}
-        <section className="inv-cards">
-          <div className="inv-card">
-            <div className="inv-card-label">فاتورة إلى · Bill To</div>
-            <div className="inv-card-name">{inv.customers?.name ?? "—"}</div>
-            <div className="inv-card-meta">
-              <span>رقم العميل: <b dir="ltr">{(inv.customers?.id ?? "").slice(0, 8).toUpperCase()}</b></span>
-              {isQuotation && validUntil && (
-                <span>صالح حتى: <b dir="ltr">{validUntil.toISOString().slice(0, 10)}</b></span>
-              )}
-            </div>
+        {/* Meta grid */}
+        <div className="inv-meta">
+          <div><b>الهاتف:</b> <span dir="ltr">{company.phone}</span></div>
+          <div><b>العنوان:</b> {company.address}</div>
+          <div><b>{isQuotation ? "تاريخ العرض:" : "تاريخ الفاتورة:"}</b> <span dir="ltr">{inv.invoice_date}</span></div>
+          <div><b>{isQuotation ? "رقم العرض:" : "رقم الفاتورة:"}</b> <span dir="ltr">{inv.invoice_number}</span></div>
+          {isQuotation && validUntil && (
+            <>
+              <div><b>تاريخ الإنشاء:</b> <span dir="ltr">{createdAt?.toISOString().slice(0, 10)}</span></div>
+              <div><b>صالح حتى:</b> <span dir="ltr">{validUntil.toISOString().slice(0, 10)}</span></div>
+              <div><b>الحالة:</b> {isExpired ? "منتهي الصلاحية" : "ساري"}</div>
+            </>
+          )}
+          <div><b>فرع البيع:</b> {company.branch}</div>
+          <div><b>اسم المخزن:</b> {company.warehouse}</div>
+          <div><b>مدخل الفاتورة:</b> {company.enteredBy}</div>
+          <div><b>رقم النسخة:</b> {company.copyNo}</div>
+        </div>
+
+        {/* Invoice type banner */}
+        <div className="inv-type">{invoiceTypeLabel}</div>
+
+        {/* Customer line */}
+        <div className="inv-customer">
+          <div><b>المطلوب من الأخوة:</b> {inv.customers?.name ?? "—"}</div>
+          <div><b>عميل رقم:</b> <span dir="ltr">{(inv.customers?.id ?? "").slice(0, 8).toUpperCase()}</span></div>
+          <div className="note">
+            <b>البيان:</b> {inv.notes || "بدون مرتجع بعد خروج البضاعة."}
           </div>
-          <div className="inv-card inv-card-muted">
-            <div className="inv-card-label">معلومات الشركة</div>
-            <div className="inv-card-meta inv-card-stack">
-              <span><b>العنوان:</b> {company.address}</span>
-              <span><b>الهاتف:</b> <span dir="ltr">{company.phone}</span></span>
-              <span><b>الفرع:</b> {company.branch} · {company.warehouse}</span>
-            </div>
-          </div>
-        </section>
+        </div>
 
         {/* Items table */}
         <div className="inv-table-wrap">
@@ -186,40 +185,45 @@ function InvoiceDetail() {
         </table>
         </div>
 
-        {/* Summary: notes + totals card */}
-        <section className="inv-summary">
-          <div className="inv-notes">
-            <div className="inv-card-label">ملاحظات · Notes</div>
-            <p>{inv.notes || "بدون مرتجع بعد خروج البضاعة."}</p>
-            <div className="inv-tafqeet"><b>التفقيط:</b> {tafqeet(inv.total, "ريال يمني")}</div>
-          </div>
-          <div className="inv-totals">
-            <div className="row"><span>عدد الأصناف</span><b className="mono">{items.length}</b></div>
-            <div className="row"><span>الخصم</span><b className="mono">{formatMoney(inv.discount_total)}</b></div>
-            <div className="row grand">
-              <span>الإجمالي المستحق</span>
-              <b className="mono">{formatMoney(inv.total)}</b>
-            </div>
-            <div className="inv-totals-cur">YER · ريال يمني</div>
-          </div>
-        </section>
+        {/* Totals row */}
+        <div className="inv-totals-row">
+          <div><b>الخصم:</b> <span className="mono">{formatMoney(inv.discount_total)}</span></div>
+          <div><b>الإجمالي بعد الخصم:</b> <span className="mono">{formatMoney(inv.total)}</span></div>
+        </div>
 
-        {/* Footer: Terms + Signatures */}
-        <footer className="inv-footer">
-          <section className="inv-terms">
-            <h4>الشروط والأحكام</h4>
-            <ol>
-              {isQuotation && (
-                <>
-                  <li>هذا المستند عرض سعر فقط ولا يُعدّ فاتورة ضريبية ولا يُلزم بالبيع.</li>
-                  <li>الأسعار سارية لمدة 7 أيام من تاريخ العرض ما لم يُذكر خلاف ذلك.</li>
-                </>
-              )}
-              <li>أصناف الثلاجة غير قابلة للإرجاع أو الاستبدال بعد خروجها من المخزن.</li>
-              <li>الالتزام بسداد القيمة بموجب سندات القبض الرسمية الصادرة من المحاسبة.</li>
-              <li>أي ملاحظات على الفاتورة يجب إبلاغها خلال 24 ساعة من الاستلام.</li>
-            </ol>
-          </section>
+        {/* Tafqeet */}
+        <div className="inv-tafqeet">
+          <b>التفقيط:</b> {tafqeet(inv.total, "ريال يمني")}
+        </div>
+
+        {/* Footer block: Terms + Payment + Signatures (kept together for print) */}
+        <div className="inv-footer">
+          <div className="inv-footer-grid">
+            <section className="inv-terms">
+              <h4>الشروط والأحكام</h4>
+              <ol>
+                {isQuotation && (
+                  <>
+                    <li>هذا المستند عرض سعر فقط ولا يُعدّ فاتورة ضريبية ولا يُلزم بالبيع.</li>
+                    <li>الأسعار سارية لمدة 7 أيام من تاريخ العرض ما لم يُذكر خلاف ذلك.</li>
+                  </>
+                )}
+                <li>أصناف الثلاجة غير قابلة للإرجاع أو الاستبدال بعد خروجها من المخزن.</li>
+                <li>الالتزام بسداد القيمة بموجب سندات القبض الرسمية الصادرة من المحاسبة.</li>
+                <li>أي ملاحظات على الفاتورة يجب إبلاغها خلال 24 ساعة من الاستلام.</li>
+                <li>الأسعار بالريال اليمني وتشمل جميع التكاليف ما لم يُذكر خلاف ذلك.</li>
+              </ol>
+            </section>
+
+            <section className="inv-pay">
+              <h4>ملاحظات</h4>
+              <ul>
+                <li>يُرجى مراجعة الأصناف والكميات قبل مغادرة المخزن.</li>
+                <li>يجب الاحتفاظ بسند القبض الرسمي الصادر من المحاسبة.</li>
+                <li>تخضع البضاعة لسياسة الإرجاع المعتمدة لدى الشركة.</li>
+              </ul>
+            </section>
+          </div>
 
           <div className="inv-sign">
             <div><div className="line" />اسم المستلم وتوقيعه</div>
@@ -227,11 +231,11 @@ function InvoiceDetail() {
             <div><div className="line" />المخازن</div>
             <div><div className="line" />المحاسب</div>
           </div>
-        </footer>
+        </div>
 
+        {/* Page footer (auto-numbered on print via CSS counters) */}
         <div className="inv-pagefoot">
-          <span>{company.nameAr} · {company.nameEn}</span>
-          <span dir="ltr">{company.phone} · {company.address}</span>
+          <span className="inv-pagefoot-static">Oplus Pharmaceuticals — {inv.invoice_number}</span>
         </div>
       </div>
     </div>
