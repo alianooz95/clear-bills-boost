@@ -14,7 +14,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import logo from "@/assets/oplus-logo.png";
+import logoAsset from "@/assets/oplus-logo.png.asset.json";
+const logo = (logoAsset as { url: string }).url;
 
 const mainItems = [
   { title: "لوحة التحكم", url: "/dashboard", icon: LayoutDashboard },
