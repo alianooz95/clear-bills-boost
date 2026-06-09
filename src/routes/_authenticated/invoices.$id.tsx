@@ -365,6 +365,12 @@ function PaymentsSection({
   const [notes, setNotes] = useState("");
 
   const paidTotal = payments.reduce((s, p) => s + Number(p.amount), 0);
+  const auditFn = useServerFn(listPaymentAudit);
+  const { data: audit = [] } = useQuery({
+    queryKey: ["payment-audit", invoiceId],
+    queryFn: () => auditFn({ data: { invoice_id: invoiceId } }),
+  });
+  const [showAudit, setShowAudit] = useState(false);
 
   return (
     <section className="print:hidden mt-6 max-w-[210mm] mx-auto bg-card border rounded-xl p-5">
