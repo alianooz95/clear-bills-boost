@@ -216,16 +216,12 @@ function InvoiceDetail() {
             </section>
 
             <section className="inv-pay">
-              <h4>طرق الدفع</h4>
+              <h4>ملاحظات</h4>
               <ul>
-                <li><b>نقداً:</b> في مقر الشركة عند الاستلام.</li>
-                <li><b>تحويل بنكي:</b> بنك الكريمي — حساب رقم <span dir="ltr">SA00 0000 0000 0000 0000</span></li>
-                <li><b>محافظ إلكترونية:</b> فلوسك / جيب / كاش — باسم Oplus Pharma</li>
-                <li><b>شيك مصدّق:</b> باسم شركة أو بلس فارما للأدوية.</li>
+                <li>يُرجى مراجعة الأصناف والكميات قبل مغادرة المخزن.</li>
+                <li>يجب الاحتفاظ بسند القبض الرسمي الصادر من المحاسبة.</li>
+                <li>تخضع البضاعة لسياسة الإرجاع المعتمدة لدى الشركة.</li>
               </ul>
-              <div className="inv-pay-note">
-                يُرجى إرفاق إيصال التحويل عند السداد، والاحتفاظ بسند القبض الرسمي.
-              </div>
             </section>
           </div>
 
@@ -237,8 +233,10 @@ function InvoiceDetail() {
           </div>
         </div>
 
-        {/* Page footer */}
-        <div className="inv-pagefoot">صفحة 1 من 1</div>
+        {/* Page footer (auto-numbered on print via CSS counters) */}
+        <div className="inv-pagefoot">
+          <span className="inv-pagefoot-static">Oplus Pharmaceuticals — {inv.invoice_number}</span>
+        </div>
       </div>
     </div>
   );
