@@ -1,7 +1,7 @@
-import { createFileRoute, Outlet, redirect, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect, useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Users, FileText, LogOut, Plus, Package } from "lucide-react";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -13,55 +13,42 @@ export const Route = createFileRoute("/_authenticated")({
   component: AuthedLayout,
 });
 
+const TITLES: Record<string, string> = {
+  "/dashboard": "لوحة التحكم",
+  "/customers": "العملاء",
+  "/invoices": "الفواتير",
+  "/invoices/new": "فاتورة جديدة",
+  "/inventory": "المخزون",
+};
+
 function AuthedLayout() {
-  const navigate = useNavigate();
-  const signOut = async () => {
-    await supabase.auth.signOut();
-    navigate({ to: "/auth" });
-  };
+  const path = useRouterState({ select: (r) => r.location.pathname });
+  const title =
+    TITLES[path] ??
+    Object.entries(TITLES).find(([k]) => path.startsWith(k))?.[1] ??
+    "";
+
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b sticky top-0 bg-background/80 backdrop-blur z-10 print:hidden">
-        <div className="container mx-auto px-4 h-14 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-1">
-            <Link to="/customers" className="font-bold text-lg">Oplus Pharma</Link>
-          </div>
-          <nav className="flex items-center gap-1">
-            <Link to="/customers">
-              {({ isActive }) => (
-                <Button variant={isActive ? "secondary" : "ghost"} size="sm">
-                  <Users className="h-4 w-4 ms-1" /> العملاء
-                </Button>
-              )}
-            </Link>
-            <Link to="/invoices">
-              {({ isActive }) => (
-                <Button variant={isActive ? "secondary" : "ghost"} size="sm">
-                  <FileText className="h-4 w-4 ms-1" /> الفواتير
-                </Button>
-              )}
-            </Link>
-            <Link to="/inventory">
-              {({ isActive }) => (
-                <Button variant={isActive ? "secondary" : "ghost"} size="sm">
-                  <Package className="h-4 w-4 ms-1" /> المخزون
-                </Button>
-              )}
-            </Link>
-            <Link to="/invoices/new">
-              <Button size="sm">
-                <Plus className="h-4 w-4 ms-1" /> فاتورة
-              </Button>
-            </Link>
-            <Button variant="ghost" size="sm" onClick={signOut}>
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </nav>
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-gradient-soft">
+        <AppSidebar />
+        <div className="flex-1 flex flex-col min-w-0">
+          <header className="h-14 flex items-center gap-3 border-b bg-background/70 backdrop-blur-xl sticky top-0 z-20 px-4 print:hidden">
+            <SidebarTrigger className="-ms-1" />
+            <div className="h-5 w-px bg-border" />
+            <h2 className="font-display text-sm font-semibold text-foreground/80">{title}</h2>
+            <div className="ms-auto flex items-center gap-2">
+              <span className="hidden sm:inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                متصل
+              </span>
+            </div>
+          </header>
+          <main className="flex-1 p-4 md:p-6 print:p-0 print:m-0">
+            <Outlet />
+          </main>
         </div>
-      </header>
-      <main className="container mx-auto px-4 py-6 print:p-0 print:m-0 print:max-w-none">
-        <Outlet />
-      </main>
-    </div>
+      </div>
+    </SidebarProvider>
   );
 }
