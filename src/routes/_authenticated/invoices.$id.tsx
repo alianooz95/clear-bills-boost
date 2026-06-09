@@ -66,6 +66,19 @@ function InvoiceDetail() {
   const payments: any[] = inv.invoice_payments ?? [];
   const paidTotal = payments.reduce((s, p) => s + Number(p.amount), 0);
   const remaining = Math.max(0, Number(inv.total) - paidTotal);
+  const isSales = inv.invoice_type === "sales";
+  const isOverdue =
+    isSales && remaining > 0 && inv.due_date && new Date(inv.due_date) < new Date();
+  const payStatus =
+    !isSales
+      ? null
+      : remaining <= 0
+      ? { cls: "is-paid", label: "مدفوعة بالكامل" }
+      : paidTotal > 0
+      ? { cls: "is-partial", label: "مدفوعة جزئياً" }
+      : isOverdue
+      ? { cls: "is-overdue", label: "متأخرة السداد" }
+      : { cls: "is-unpaid", label: "غير مدفوعة" };
   const paymentTypeLabel =
     inv.payment_type === "deferred_cash"
       ? "نقدي مؤجل"
@@ -146,6 +159,26 @@ function InvoiceDetail() {
               <span>{isQuotation ? "تاريخ العرض" : "تاريخ الفاتورة"}</span>
               <b dir="ltr">{inv.invoice_date}</b>
             </div>
+          {isSales && (
+            <>
+              <div className="inv-band-date">
+                <span>نوع الدفع</span>
+                <b>{paymentTypeLabel}</b>
+              </div>
+              {inv.due_date && (
+                <div className="inv-band-date">
+                  <span>تاريخ الاستحقاق</span>
+                  <b dir="ltr">{inv.due_date}</b>
+                </div>
+              )}
+              {payStatus && (
+                <div className={`inv-band-status ${payStatus.cls}`}>
+                  <span className="dot" />
+                  {payStatus.label}
+                </div>
+              )}
+            </>
+          )}
           </div>
         </header>
 
