@@ -66,6 +66,19 @@ function InvoiceDetail() {
   const payments: any[] = inv.invoice_payments ?? [];
   const paidTotal = payments.reduce((s, p) => s + Number(p.amount), 0);
   const remaining = Math.max(0, Number(inv.total) - paidTotal);
+  const isSales = inv.invoice_type === "sales";
+  const isOverdue =
+    isSales && remaining > 0 && inv.due_date && new Date(inv.due_date) < new Date();
+  const payStatus =
+    !isSales
+      ? null
+      : remaining <= 0
+      ? { cls: "is-paid", label: "مدفوعة بالكامل" }
+      : paidTotal > 0
+      ? { cls: "is-partial", label: "مدفوعة جزئياً" }
+      : isOverdue
+      ? { cls: "is-overdue", label: "متأخرة السداد" }
+      : { cls: "is-unpaid", label: "غير مدفوعة" };
   const paymentTypeLabel =
     inv.payment_type === "deferred_cash"
       ? "نقدي مؤجل"
@@ -146,6 +159,26 @@ function InvoiceDetail() {
               <span>{isQuotation ? "تاريخ العرض" : "تاريخ الفاتورة"}</span>
               <b dir="ltr">{inv.invoice_date}</b>
             </div>
+          {isSales && (
+            <>
+              <div className="inv-band-date">
+                <span>نوع الدفع</span>
+                <b>{paymentTypeLabel}</b>
+              </div>
+              {inv.due_date && (
+                <div className="inv-band-date">
+                  <span>تاريخ الاستحقاق</span>
+                  <b dir="ltr">{inv.due_date}</b>
+                </div>
+              )}
+              {payStatus && (
+                <div className={`inv-band-status ${payStatus.cls}`}>
+                  <span className="dot" />
+                  {payStatus.label}
+                </div>
+              )}
+            </>
+          )}
           </div>
         </header>
 
@@ -320,19 +353,27 @@ function PaymentsSection({
   invoiceId: string;
   payments: any[];
   remaining: number;
-  onAdd: (input: { amount: number; payment_date: string; method?: string | null; notes?: string | null }) => void;
+  onAdd: (input: { amount: number; payment_date: string; method?: string | null; reference?: string | null; notes?: string | null }) => void;
   onDelete: (id: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState<string>(remaining > 0 ? String(remaining) : "");
   const [pdate, setPdate] = useState<string>(new Date().toISOString().slice(0, 10));
   const [method, setMethod] = useState<string>("cash");
+  const [reference, setReference] = useState("");
   const [notes, setNotes] = useState("");
+
+  const paidTotal = payments.reduce((s, p) => s + Number(p.amount), 0);
 
   return (
     <section className="print:hidden mt-6 max-w-[210mm] mx-auto bg-card border rounded-xl p-5">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-bold">التحصيلات ({payments.length})</h3>
+        <div>
+          <h3 className="text-lg font-bold">إدارة التحصيلات</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            عدد الدفعات: {payments.length} · المدفوع: {formatMoney(paidTotal)} · المتبقي: {formatMoney(remaining)}
+          </p>
+        </div>
         {remaining > 0 && (
           <Button size="sm" onClick={() => setOpen((v) => !v)}>
             <Plus className="h-4 w-4 ms-1" /> {open ? "إلغاء" : "إضافة تحصيل"}
@@ -355,6 +396,10 @@ function PaymentsSection({
             <Input value={method} onChange={(e) => setMethod(e.target.value)} placeholder="نقدي / تحويل / شيك" />
           </div>
           <div className="space-y-1.5">
+            <Label className="text-xs">المرجع / رقم السند</Label>
+            <Input value={reference} onChange={(e) => setReference(e.target.value)} placeholder="رقم السند أو الشيك أو الحوالة" />
+          </div>
+          <div className="space-y-1.5 sm:col-span-2">
             <Label className="text-xs">ملاحظات</Label>
             <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="اختياري" />
           </div>
@@ -363,9 +408,10 @@ function PaymentsSection({
               onClick={() => {
                 const amt = Number(amount);
                 if (!amt || amt <= 0) return;
-                onAdd({ amount: amt, payment_date: pdate, method, notes });
+                onAdd({ amount: amt, payment_date: pdate, method, reference, notes });
                 setOpen(false);
                 setAmount("");
+                setReference("");
                 setNotes("");
               }}
             >
@@ -384,6 +430,7 @@ function PaymentsSection({
               <tr>
                 <th className="text-start py-2">التاريخ</th>
                 <th className="text-start py-2">الطريقة</th>
+                <th className="text-start py-2">المرجع</th>
                 <th className="text-start py-2">ملاحظات</th>
                 <th className="text-end py-2">المبلغ</th>
                 <th className="py-2 w-10"></th>
@@ -397,6 +444,7 @@ function PaymentsSection({
                   <tr key={p.id} className="border-b last:border-0">
                     <td className="py-2" dir="ltr">{p.payment_date}</td>
                     <td className="py-2">{p.method || "—"}</td>
+                    <td className="py-2 font-mono text-xs" dir="ltr">{p.reference || "—"}</td>
                     <td className="py-2 text-muted-foreground">{p.notes || "—"}</td>
                     <td className="py-2 text-end font-mono font-semibold">{formatMoney(p.amount)}</td>
                     <td className="py-2">

@@ -212,6 +212,7 @@ const PaymentInput = z.object({
   amount: z.number().positive(),
   payment_date: z.string().min(1),
   method: z.string().max(50).optional().nullable(),
+  reference: z.string().max(100).optional().nullable(),
   notes: z.string().max(500).optional().nullable(),
 });
 
@@ -227,6 +228,7 @@ export const addInvoicePayment = createServerFn({ method: "POST" })
         amount: data.amount,
         payment_date: data.payment_date,
         method: data.method || null,
+        reference: data.reference || null,
         notes: data.notes || null,
       })
       .select("*")

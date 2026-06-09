@@ -312,6 +312,29 @@
 .inv-band-date span { color: rgba(255,255,255,0.6); }
 .inv-band-date b { font-weight: 600; font-variant-numeric: tabular-nums; }
 
+/* Payment status pill inside the band */
+.inv-band-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(255,255,255,0.14);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.25);
+}
+.inv-band-status.is-paid { background: #14b8a6; border-color: #14b8a6; color: #062c2a; }
+.inv-band-status.is-partial { background: #f59e0b; border-color: #f59e0b; color: #3b2200; }
+.inv-band-status.is-unpaid { background: #ef4444; border-color: #ef4444; color: #fff; }
+.inv-band-status.is-overdue { background: #b91c1c; border-color: #b91c1c; color: #fff; }
+.inv-band-status .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .85; }
+
 /* === Floating meta cards === */
 .inv-cards {
   display: grid;
