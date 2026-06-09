@@ -149,6 +149,7 @@ export type Database = {
           notes: string | null
           owner_id: string
           payment_date: string
+          reference: string | null
         }
         Insert: {
           amount: number
@@ -159,6 +160,7 @@ export type Database = {
           notes?: string | null
           owner_id: string
           payment_date?: string
+          reference?: string | null
         }
         Update: {
           amount?: number
@@ -169,6 +171,7 @@ export type Database = {
           notes?: string | null
           owner_id?: string
           payment_date?: string
+          reference?: string | null
         }
         Relationships: [
           {

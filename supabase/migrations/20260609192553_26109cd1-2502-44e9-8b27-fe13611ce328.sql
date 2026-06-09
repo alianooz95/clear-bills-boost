@@ -1,0 +1,1 @@
+ALTER TABLE public.invoice_payments ADD COLUMN IF NOT EXISTS reference text;
