@@ -19,6 +19,8 @@ const CreateInvoiceInput = z.object({
   invoice_type: z.enum(["sales", "credit_note", "quotation"]),
   invoice_date: z.string().min(1),
   notes: z.string().max(1000).optional().nullable(),
+  payment_type: z.enum(["cash", "deferred_cash", "credit"]).default("cash"),
+  due_date: z.string().optional().nullable(),
   items: z.array(ItemSchema).min(1),
 });
 
@@ -48,7 +50,7 @@ export const getInvoice = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     const { data: inv, error } = await context.supabase
       .from("invoices")
-      .select("*, customers(*), invoice_items(*)")
+      .select("*, customers(*), invoice_items(*), invoice_payments(*)")
       .eq("id", data.id)
       .maybeSingle();
     if (error) throw new Error(error.message);
@@ -86,6 +88,11 @@ export const createInvoice = createServerFn({ method: "POST" })
         invoice_type: data.invoice_type,
         invoice_date: data.invoice_date,
         notes: data.notes || null,
+        payment_type: data.invoice_type === "sales" ? data.payment_type : "cash",
+        due_date:
+          data.invoice_type === "sales" && data.payment_type === "deferred_cash"
+            ? data.due_date || null
+            : null,
       })
       .select("*")
       .single();
@@ -109,6 +116,27 @@ export const createInvoice = createServerFn({ method: "POST" })
       // Rollback the invoice if items failed
       await context.supabase.from("invoices").delete().eq("id", inv.id);
       throw new Error(itErr.message);
+    }
+
+    // Auto-record full payment for cash sales invoices
+    if (data.invoice_type === "sales" && data.payment_type === "cash") {
+      // Re-fetch invoice total (triggers compute it from items)
+      const { data: refreshed } = await context.supabase
+        .from("invoices")
+        .select("total")
+        .eq("id", inv.id)
+        .single();
+      const total = Number(refreshed?.total ?? 0);
+      if (total > 0) {
+        await context.supabase.from("invoice_payments").insert({
+          invoice_id: inv.id,
+          owner_id: context.userId,
+          amount: total,
+          payment_date: data.invoice_date,
+          method: "cash",
+          notes: "تحصيل تلقائي — فاتورة نقدية",
+        });
+      }
     }
 
     return { id: inv.id, invoice_number: invoiceNumber };
