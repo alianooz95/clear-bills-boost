@@ -191,49 +191,41 @@ function InvoiceDetail() {
         </table>
         </div>
 
-        {/* Totals row */}
-        <div className="inv-totals-row">
-          <div><b>الخصم:</b> <span className="mono">{formatMoney(inv.discount_total)}</span></div>
-          <div><b>الإجمالي بعد الخصم:</b> <span className="mono">{formatMoney(inv.total)}</span></div>
-        </div>
-
-        {/* Tafqeet */}
-        <div className="inv-tafqeet">
-          <b>التفقيط:</b> {tafqeet(inv.total, "ريال يمني")}
-        </div>
-
-        {/* Footer block: Terms + Payment + Signatures (kept together for print) */}
-        <div className="inv-footer">
-          <div className="inv-footer-grid">
-            <section className="inv-terms">
-              <h4>الشروط والأحكام</h4>
-              <ol>
-                {isQuotation && (
-                  <>
-                    <li>هذا المستند عرض سعر فقط ولا يُعدّ فاتورة ضريبية ولا يُلزم بالبيع.</li>
-                    <li>الأسعار سارية لمدة 7 أيام من تاريخ العرض ما لم يُذكر خلاف ذلك.</li>
-                  </>
-                )}
-                <li>أصناف الثلاجة غير قابلة للإرجاع أو الاستبدال بعد خروجها من المخزن.</li>
-                <li>الالتزام بسداد القيمة بموجب سندات القبض الرسمية الصادرة من المحاسبة.</li>
-                <li>أي ملاحظات على الفاتورة يجب إبلاغها خلال 24 ساعة من الاستلام.</li>
-                <li>الأسعار بالريال اليمني وتشمل جميع التكاليف ما لم يُذكر خلاف ذلك.</li>
-              </ol>
-            </section>
-
-            <section className="inv-pay">
-              <h4>طرق الدفع</h4>
-              <ul>
-                <li><b>نقداً:</b> في مقر الشركة عند الاستلام.</li>
-                <li><b>تحويل بنكي:</b> بنك الكريمي — حساب رقم <span dir="ltr">SA00 0000 0000 0000 0000</span></li>
-                <li><b>محافظ إلكترونية:</b> فلوسك / جيب / كاش — باسم Oplus Pharma</li>
-                <li><b>شيك مصدّق:</b> باسم شركة أو بلس فارما للأدوية.</li>
-              </ul>
-              <div className="inv-pay-note">
-                يُرجى إرفاق إيصال التحويل عند السداد، والاحتفاظ بسند القبض الرسمي.
-              </div>
-            </section>
+        {/* Totals stripe */}
+        <section className="inv-totals">
+          <div className="inv-totals-tafqeet">
+            <span className="lbl">التفقيط</span>
+            <p>{tafqeet(inv.total, "ريال يمني")}</p>
           </div>
+          <div className="inv-totals-figures">
+            <div className="row">
+              <span>الخصم</span>
+              <b className="mono">{formatMoney(inv.discount_total)}</b>
+            </div>
+            <div className="row grand">
+              <span>الإجمالي بعد الخصم</span>
+              <b className="mono">{formatMoney(inv.total)} <em>YER</em></b>
+            </div>
+          </div>
+        </section>
+
+        {/* Footer block: Terms + Signatures (kept together for print) */}
+        <div className="inv-footer">
+          <section className="inv-terms-block">
+            <h4>الشروط والأحكام</h4>
+            <ol>
+              {isQuotation && (
+                <>
+                  <li>هذا المستند عرض سعر فقط ولا يُعدّ فاتورة ضريبية ولا يُلزم بالبيع.</li>
+                  <li>الأسعار سارية لمدة 7 أيام من تاريخ العرض ما لم يُذكر خلاف ذلك.</li>
+                </>
+              )}
+              <li>أصناف الثلاجة غير قابلة للإرجاع أو الاستبدال بعد خروجها من المخزن.</li>
+              <li>الالتزام بسداد القيمة بموجب سندات القبض الرسمية الصادرة من المحاسبة.</li>
+              <li>أي ملاحظات على الفاتورة يجب إبلاغها خلال 24 ساعة من الاستلام.</li>
+              <li>الأسعار بالريال اليمني وتشمل جميع التكاليف ما لم يُذكر خلاف ذلك.</li>
+            </ol>
+          </section>
 
           <div className="inv-sign">
             <div><div className="line" />اسم المستلم وتوقيعه</div>
@@ -244,7 +236,9 @@ function InvoiceDetail() {
         </div>
 
         {/* Page footer */}
-        <div className="inv-pagefoot">صفحة 1 من 1</div>
+        <div className="inv-pagefoot">
+          <span>Oplus Pharmaceuticals · {inv.invoice_number}</span>
+        </div>
       </div>
     </div>
   );
