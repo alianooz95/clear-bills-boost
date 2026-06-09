@@ -248,3 +248,35 @@ export const deleteInvoicePayment = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export const listPaymentAudit = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { invoice_id: string }) =>
+    z.object({ invoice_id: z.string().uuid() }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase
+      .from("invoice_payment_audit")
+      .select("*")
+      .eq("invoice_id", data.invoice_id)
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
+
+export const getPaymentReceipt = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { payment_id: string }) =>
+    z.object({ payment_id: z.string().uuid() }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: pay, error } = await context.supabase
+      .from("invoice_payments")
+      .select("*, invoices(*, customers(*), invoice_payments(amount))")
+      .eq("id", data.payment_id)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!pay) throw new Error("الإيصال غير موجود");
+    return pay;
+  });
