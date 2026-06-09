@@ -11,11 +11,10 @@ import { formatMoney } from "@/lib/invoices/invoice-math";
 import {
   Users,
   FileText,
-  Package,
   TrendingUp,
   Plus,
   ArrowUpRight,
-  AlertTriangle,
+  CalendarClock,
   Pill,
 } from "lucide-react";
 
@@ -45,7 +44,11 @@ function DashboardPage() {
   const sales = invoices.filter((i: any) => i.invoice_type === "sales");
   const totalRevenue = sales.reduce((s: number, i: any) => s + Number(i.total ?? 0), 0);
   const quotations = invoices.filter((i: any) => i.invoice_type === "quotation").length;
-  const lowStock = inventory.filter((p: any) => Number(p.quantity ?? 0) <= Number(p.reorder_level ?? 0));
+  const today = new Date();
+  const in90 = new Date(today.getTime() + 90 * 86400000);
+  const expiringSoon = inventory
+    .filter((p: any) => p.expiry_date && new Date(p.expiry_date) <= in90)
+    .sort((a: any, b: any) => +new Date(a.expiry_date) - +new Date(b.expiry_date));
   const recent = invoices.slice(0, 6);
 
   const stats = [
@@ -74,7 +77,7 @@ function DashboardPage() {
       label: "المنتجات",
       value: String(inventory.length),
       icon: Pill,
-      hint: `${lowStock.length} منخفض المخزون`,
+      hint: `${expiringSoon.length} قاربت على الانتهاء`,
       accent: "from-chart-4 to-chart-4",
     },
   ];
@@ -176,29 +179,29 @@ function DashboardPage() {
         <Card className="border-border/60 shadow-soft">
           <CardHeader className="flex flex-row items-center justify-between pb-3">
             <CardTitle className="font-display text-base flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-amber-500" /> مخزون منخفض
+              <CalendarClock className="h-4 w-4 text-amber-500" /> قارب على الانتهاء
             </CardTitle>
             <Button asChild variant="ghost" size="sm">
               <Link to="/inventory">المخزون</Link>
             </Button>
           </CardHeader>
           <CardContent className="p-0">
-            {lowStock.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-10">كل المنتجات بمخزون كافٍ ✓</p>
+            {expiringSoon.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-10">لا توجد منتجات قاربت على الانتهاء ✓</p>
             ) : (
               <ul className="divide-y divide-border/60">
-                {lowStock.slice(0, 6).map((p: any) => (
+                {expiringSoon.slice(0, 6).map((p: any) => (
                   <li key={p.id} className="flex items-center justify-between px-5 py-3">
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="h-9 w-9 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
-                        <Package className="h-4 w-4" />
+                        <Pill className="h-4 w-4" />
                       </div>
                       <div className="min-w-0">
                         <p className="text-sm font-medium truncate">{p.name}</p>
-                        <p className="text-[11px] text-muted-foreground">حد الطلب: {p.reorder_level ?? 0}</p>
+                        <p className="text-[11px] text-muted-foreground">انتهاء: {p.expiry_date}</p>
                       </div>
                     </div>
-                    <Badge variant="destructive" className="font-mono">{p.quantity ?? 0}</Badge>
+                    <Badge variant="outline" className="font-mono">{p.unit || "وحدة"}</Badge>
                   </li>
                 ))}
               </ul>
