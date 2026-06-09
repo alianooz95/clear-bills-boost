@@ -150,7 +150,35 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: "DM Sans", "Tajawal", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-feature-settings: "ss01", "cv11";
   }
+  h1, h2, h3, h4, h5, h6, .font-display {
+    font-family: "Space Grotesk", "DM Sans", "Tajawal", sans-serif;
+    letter-spacing: -0.01em;
+  }
+}
+
+/* ===========================
+   Brand utility helpers
+   =========================== */
+@utility bg-gradient-brand {
+  background-image: var(--gradient-brand);
+}
+@utility bg-gradient-soft {
+  background-image: var(--gradient-soft);
+}
+@utility shadow-elegant {
+  box-shadow: var(--shadow-elegant);
+}
+@utility shadow-soft {
+  box-shadow: var(--shadow-soft);
+}
+@utility text-gradient-brand {
+  background-image: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 /* ===================================================================
