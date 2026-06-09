@@ -68,11 +68,18 @@ function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl">Oplus Pharma — نظام الفواتير</CardTitle>
-          <CardDescription>سجّل الدخول أو أنشئ حسابًا للمتابعة.</CardDescription>
+    <div className="min-h-screen relative flex items-center justify-center p-4 bg-gradient-soft overflow-hidden">
+      <div className="absolute inset-0 -z-10 pointer-events-none">
+        <div className="absolute top-[-10%] start-[-10%] h-[40rem] w-[40rem] rounded-full bg-primary/15 blur-3xl" />
+        <div className="absolute bottom-[-15%] end-[-10%] h-[36rem] w-[36rem] rounded-full bg-accent/25 blur-3xl" />
+      </div>
+      <Card className="w-full max-w-md border-border/60 shadow-elegant backdrop-blur-xl bg-background/80">
+        <CardHeader className="text-center">
+          <div className="mx-auto mb-2 h-14 w-14 rounded-2xl bg-gradient-brand shadow-elegant flex items-center justify-center">
+            <span className="font-display text-xl font-bold text-primary-foreground">O+</span>
+          </div>
+          <CardTitle className="font-display text-2xl">Oplus Pharma</CardTitle>
+          <CardDescription>سجّل الدخول أو أنشئ حسابًا للمتابعة</CardDescription>
         </CardHeader>
         <CardContent>
           <Button
