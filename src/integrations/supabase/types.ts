@@ -139,6 +139,51 @@ export type Database = {
           },
         ]
       }
+      invoice_payment_audit: {
+        Row: {
+          action: string
+          actor_id: string | null
+          amount: number
+          created_at: string
+          id: string
+          invoice_id: string
+          method: string | null
+          notes: string | null
+          owner_id: string
+          payment_date: string | null
+          payment_id: string | null
+          reference: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          amount: number
+          created_at?: string
+          id?: string
+          invoice_id: string
+          method?: string | null
+          notes?: string | null
+          owner_id: string
+          payment_date?: string | null
+          payment_id?: string | null
+          reference?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          amount?: number
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          method?: string | null
+          notes?: string | null
+          owner_id?: string
+          payment_date?: string | null
+          payment_id?: string | null
+          reference?: string | null
+        }
+        Relationships: []
+      }
       invoice_payments: {
         Row: {
           amount: number

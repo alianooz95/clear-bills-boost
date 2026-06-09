@@ -7,9 +7,10 @@ import {
   convertQuotationToInvoice,
   addInvoicePayment,
   deleteInvoicePayment,
+  listPaymentAudit,
 } from "@/lib/invoices/invoices.functions";
 import { Button } from "@/components/ui/button";
-import { Printer, Trash2, FileCheck2, Plus } from "lucide-react";
+import { Printer, Trash2, FileCheck2, Plus, Receipt, History } from "lucide-react";
 import { formatMoney } from "@/lib/invoices/invoice-math";
 import { tafqeet } from "@/lib/invoices/tafqeet";
 import { toast } from "sonner";
@@ -364,6 +365,12 @@ function PaymentsSection({
   const [notes, setNotes] = useState("");
 
   const paidTotal = payments.reduce((s, p) => s + Number(p.amount), 0);
+  const auditFn = useServerFn(listPaymentAudit);
+  const { data: audit = [] } = useQuery({
+    queryKey: ["payment-audit", invoiceId],
+    queryFn: () => auditFn({ data: { invoice_id: invoiceId } }),
+  });
+  const [showAudit, setShowAudit] = useState(false);
 
   return (
     <section className="print:hidden mt-6 max-w-[210mm] mx-auto bg-card border rounded-xl p-5">
@@ -448,9 +455,20 @@ function PaymentsSection({
                     <td className="py-2 text-muted-foreground">{p.notes || "—"}</td>
                     <td className="py-2 text-end font-mono font-semibold">{formatMoney(p.amount)}</td>
                     <td className="py-2">
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => onDelete(p.id)}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
+                      <div className="flex items-center gap-1 justify-end">
+                        <Link
+                          to="/invoices/$id/receipt/$paymentId"
+                          params={{ id: invoiceId, paymentId: p.id }}
+                          target="_blank"
+                          className="inline-flex h-7 w-7 items-center justify-center rounded hover:bg-muted text-primary"
+                          title="طباعة إيصال التحصيل"
+                        >
+                          <Receipt className="h-3.5 w-3.5" />
+                        </Link>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => onDelete(p.id)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -458,6 +476,53 @@ function PaymentsSection({
           </table>
         </div>
       )}
+
+      <div className="mt-5 pt-4 border-t">
+        <button
+          type="button"
+          onClick={() => setShowAudit((v) => !v)}
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+        >
+          <History className="h-3.5 w-3.5" />
+          {showAudit ? "إخفاء سجل التدقيق" : `عرض سجل التدقيق (${audit.length})`}
+        </button>
+        {showAudit && (
+          <div className="mt-3 overflow-x-auto">
+            {audit.length === 0 ? (
+              <p className="text-xs text-muted-foreground py-3">لا توجد عمليات مسجلة.</p>
+            ) : (
+              <table className="w-full text-xs">
+                <thead className="text-muted-foreground border-b">
+                  <tr>
+                    <th className="text-start py-1.5">الوقت</th>
+                    <th className="text-start py-1.5">العملية</th>
+                    <th className="text-start py-1.5">المرجع</th>
+                    <th className="text-end py-1.5">المبلغ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {audit.map((a: any) => (
+                    <tr key={a.id} className="border-b last:border-0">
+                      <td className="py-1.5" dir="ltr">{new Date(a.created_at).toLocaleString("en-GB")}</td>
+                      <td className="py-1.5">
+                        <span className={
+                          a.action === "created"
+                            ? "inline-block px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                            : "inline-block px-2 py-0.5 rounded bg-destructive/10 text-destructive"
+                        }>
+                          {a.action === "created" ? "إضافة" : "حذف"}
+                        </span>
+                      </td>
+                      <td className="py-1.5 font-mono" dir="ltr">{a.reference || "—"}</td>
+                      <td className="py-1.5 text-end font-mono">{formatMoney(a.amount)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
+      </div>
     </section>
   );
 }
