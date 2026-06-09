@@ -65,6 +65,8 @@ function NewInvoicePage() {
   const [notes, setNotes] = useState("");
   const [rows, setRows] = useState<Row[]>([emptyRow()]);
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
+  const [paymentType, setPaymentType] = useState<"cash" | "deferred_cash" | "credit">("cash");
+  const [dueDate, setDueDate] = useState<string>("");
 
   const items = useMemo(
     () =>
@@ -92,6 +94,8 @@ function NewInvoicePage() {
           invoice_type: type,
           invoice_date: date,
           notes: notes || null,
+          payment_type: paymentType,
+          due_date: paymentType === "deferred_cash" ? dueDate || null : null,
           items: items.filter((it) => it.item_name.trim()),
         },
       }),
@@ -111,7 +115,8 @@ function NewInvoicePage() {
   const canSubmit =
     !!customerId &&
     !!date &&
-    items.some((it) => it.item_name.trim() && it.sold_quantity > 0 && it.unit_price >= 0);
+    items.some((it) => it.item_name.trim() && it.sold_quantity > 0 && it.unit_price >= 0) &&
+    (type !== "sales" || paymentType !== "deferred_cash" || !!dueDate);
 
   const filledCount = items.filter((it) => it.item_name.trim() && it.sold_quantity > 0).length;
 
@@ -164,6 +169,46 @@ function NewInvoicePage() {
               <Input className="h-11" dir="ltr" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
             </div>
           </div>
+
+          {type === "sales" && (
+            <div className="space-y-3 pt-2 border-t">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">نوع الدفع</Label>
+              <div className="grid grid-cols-3 gap-2 p-1 bg-muted rounded-lg">
+                <button
+                  type="button"
+                  onClick={() => setPaymentType("cash")}
+                  className={`py-2.5 rounded-md text-xs sm:text-sm font-semibold transition ${paymentType === "cash" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
+                >
+                  نقدي
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPaymentType("deferred_cash")}
+                  className={`py-2.5 rounded-md text-xs sm:text-sm font-semibold transition ${paymentType === "deferred_cash" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
+                >
+                  نقدي مؤجل
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPaymentType("credit")}
+                  className={`py-2.5 rounded-md text-xs sm:text-sm font-semibold transition ${paymentType === "credit" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
+                >
+                  آجل
+                </button>
+              </div>
+              {paymentType === "deferred_cash" && (
+                <div className="space-y-1.5">
+                  <Label>تاريخ الاستحقاق *</Label>
+                  <Input className="h-11" dir="ltr" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">
+                {paymentType === "cash" && "سيتم تسجيل التحصيل الكامل تلقائياً عند الحفظ."}
+                {paymentType === "deferred_cash" && "فاتورة نقدية مؤجلة الدفع إلى تاريخ محدد."}
+                {paymentType === "credit" && "فاتورة آجلة — تُسجَّل التحصيلات لاحقاً من صفحة الفاتورة."}
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
