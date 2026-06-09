@@ -80,9 +80,20 @@ function InvoicesPage() {
                   <TableCell>{inv.customers?.name ?? "—"}</TableCell>
                   {tab !== "quotation" && (
                     <TableCell>
-                      <Badge variant={inv.invoice_type === "sales" ? "default" : inv.invoice_type === "quotation" ? "outline" : "secondary"}>
-                        {inv.invoice_type === "sales" ? "مبيعات" : inv.invoice_type === "quotation" ? "عرض سعر" : "تعويضية"}
-                      </Badge>
+                      <div className="flex flex-wrap items-center gap-1">
+                        <Badge variant={inv.invoice_type === "sales" ? "default" : inv.invoice_type === "quotation" ? "outline" : "secondary"}>
+                          {inv.invoice_type === "sales" ? "مبيعات" : inv.invoice_type === "quotation" ? "عرض سعر" : "تعويضية"}
+                        </Badge>
+                        {inv.invoice_type === "sales" && (
+                          <Badge variant="outline" className="font-normal">
+                            {inv.payment_type === "deferred_cash"
+                              ? `نقدي مؤجل${inv.due_date ? ` · ${inv.due_date}` : ""}`
+                              : inv.payment_type === "credit"
+                              ? "آجل"
+                              : "نقدي"}
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
                   )}
                   {tab === "quotation" && (
