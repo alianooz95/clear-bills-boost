@@ -38,6 +38,7 @@ type Item = {
   unit: string | null;
   unit_price: number;
   cost_price: number;
+  public_price: number;
   quantity: number;
   bonus_quantity: number;
   supplier_id: string | null;
@@ -142,6 +143,7 @@ function InventoryPage() {
                     <span>الكمية: <span className="font-mono font-semibold">{it.quantity}</span> {it.unit}</span>
                     {Number(it.bonus_quantity) > 0 && <span className="text-emerald-700">بونص: <span className="font-mono">{it.bonus_quantity}</span></span>}
                     <span>تكلفة: <span className="font-mono">{formatMoney(it.cost_price)}</span></span>
+                    {Number(it.public_price) > 0 && <span>جمهور: <span className="font-mono">{formatMoney(it.public_price)}</span></span>}
                   </div>
                 </div>
                 <div className="text-end shrink-0">
