@@ -29,7 +29,7 @@ export const Route = createFileRoute("/_authenticated/inventory/")({
   component: InventoryPage,
 });
 
-type Category = "owned" | "negotiation" | "market";
+type Category = "owned" | "negotiation" | "market" | "import";
 type Item = {
   id: string;
   name: string;
@@ -53,6 +53,7 @@ const CATS: { value: Category; label: string }[] = [
   { value: "owned", label: "منتجاتي" },
   { value: "negotiation", label: "تحت التفاوض" },
   { value: "market", label: "أسعار السوق" },
+  { value: "import", label: "أرغب باستيرادها" },
 ];
 
 function InventoryPage() {
@@ -100,7 +101,7 @@ function InventoryPage() {
       </div>
 
       <Tabs value={category} onValueChange={(v) => setCategory(v as Category)}>
-        <TabsList className="grid grid-cols-3 w-full max-w-md">
+        <TabsList className="grid grid-cols-4 w-full max-w-2xl">
           {CATS.map((c) => <TabsTrigger key={c.value} value={c.value}>{c.label}</TabsTrigger>)}
         </TabsList>
       </Tabs>
@@ -459,6 +460,7 @@ const CAT_LABEL: Record<Category, string> = {
   owned: "منتجاتي المتوفرة",
   negotiation: "منتجات تحت التفاوض",
   market: "أسعار السوق المرجعية",
+  import: "أصناف أرغب باستيرادها",
 };
 
 type CompanyInfo = { name: string; address: string; phone: string; logo_data_url: string };

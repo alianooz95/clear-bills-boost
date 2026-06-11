@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Printer, FileDown } from "lucide-react";
 
 const searchSchema = z.object({
-  category: z.enum(["owned", "negotiation", "market"]).default("owned"),
+  category: z.enum(["owned", "negotiation", "market", "import"]).default("owned"),
 });
 
 export const Route = createFileRoute("/_authenticated/inventory/print")({
@@ -24,6 +24,7 @@ const CAT_LABEL: Record<string, string> = {
   owned: "منتجاتي المتوفرة",
   negotiation: "منتجات تحت التفاوض",
   market: "أسعار السوق المرجعية",
+  import: "أصناف أرغب باستيرادها",
 };
 
 function PrintCatalog() {
