@@ -137,7 +137,7 @@ function InventoryPage() {
                     {it.pharma_form && <Badge variant="outline" className="text-[10px]">{it.pharma_form}</Badge>}
                   </div>
                   <div className="text-xs text-muted-foreground flex flex-wrap gap-x-3 gap-y-1">
-                    {it.suppliers?.name && <span>المورد: {it.suppliers.name}</span>}
+                    {(it.suppliers?.name || it.supplier_name) && <span>المورد: {it.suppliers?.name ?? it.supplier_name}</span>}
                     {it.country && <span>المنشأ: {it.country}</span>}
                     {it.expiry_date && <span>انتهاء: <span dir="ltr">{it.expiry_date.slice(0, 7)}</span></span>}
                     {it.batch_number && <span>باتش: <span dir="ltr">{it.batch_number}</span></span>}
@@ -641,7 +641,7 @@ function PdfExportDialog({
           fields.scientific_name && td(esc(it.scientific_name)),
           fields.pharma_form && td(esc(it.pharma_form)),
           fields.country && td(esc(it.country)),
-          fields.supplier && td(esc(it.suppliers?.name)),
+          fields.supplier && td(esc(it.suppliers?.name ?? it.supplier_name)),
           fields.quantity && td(`${it.quantity} ${esc(it.unit || "")}`, { end: true, ltr: true }),
           fields.bonus_quantity && td(String(it.bonus_quantity || 0), { end: true, ltr: true }),
           fields.cost_price && td(formatMoney(it.cost_price), { end: true, ltr: true }),
