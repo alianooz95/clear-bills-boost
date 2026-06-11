@@ -18,7 +18,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Pencil, Trash2, Package, Printer, ArrowRightLeft } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Plus, Search, Pencil, Trash2, Package, Printer, ArrowRightLeft, FileDown } from "lucide-react";
 import { formatMoney } from "@/lib/invoices/invoice-math";
 import { toast } from "sonner";
 
@@ -59,6 +60,7 @@ function InventoryPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Item | null>(null);
   const [converting, setConverting] = useState<Item | null>(null);
+  const [pdfOpen, setPdfOpen] = useState(false);
 
   const listFn = useServerFn(listInventory);
   const { data: items, isLoading } = useQuery({
@@ -83,6 +85,9 @@ function InventoryPage() {
           <Package className="h-6 w-6" /> المنتجات الدوائية
         </h1>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setPdfOpen(true)}>
+            <FileDown className="h-4 w-4 ms-1" /> تصدير PDF
+          </Button>
           <Button variant="outline" onClick={() => window.open(`/inventory/print?category=${category}`, "_blank")}>
             <Printer className="h-4 w-4 ms-1" /> طباعة القائمة
           </Button>
@@ -173,6 +178,13 @@ function InventoryPage() {
         item={converting}
         onClose={() => setConverting(null)}
         onDone={() => { qc.invalidateQueries({ queryKey: ["inventory"] }); setConverting(null); }}
+      />
+
+      <PdfExportDialog
+        open={pdfOpen}
+        onOpenChange={setPdfOpen}
+        category={category}
+        items={(items as Item[]) ?? []}
       />
     </div>
   );
