@@ -245,6 +245,7 @@ export type Database = {
           owner_id: string
           payment_date: string
           reference: string | null
+          source_receipt_id: string | null
         }
         Insert: {
           amount: number
@@ -256,6 +257,7 @@ export type Database = {
           owner_id: string
           payment_date?: string
           reference?: string | null
+          source_receipt_id?: string | null
         }
         Update: {
           amount?: number
@@ -267,6 +269,7 @@ export type Database = {
           owner_id?: string
           payment_date?: string
           reference?: string | null
+          source_receipt_id?: string | null
         }
         Relationships: [
           {
@@ -274,6 +277,13 @@ export type Database = {
             columns: ["invoice_id"]
             isOneToOne: false
             referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_payments_source_receipt_id_fkey"
+            columns: ["source_receipt_id"]
+            isOneToOne: false
+            referencedRelation: "customer_receipts"
             referencedColumns: ["id"]
           },
         ]
