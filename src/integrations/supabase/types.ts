@@ -147,6 +147,7 @@ export type Database = {
           quantity: number
           scientific_name: string | null
           supplier_id: string | null
+          supplier_name: string | null
           unit: string | null
           unit_price: number
           updated_at: string
@@ -167,6 +168,7 @@ export type Database = {
           quantity?: number
           scientific_name?: string | null
           supplier_id?: string | null
+          supplier_name?: string | null
           unit?: string | null
           unit_price?: number
           updated_at?: string
@@ -187,6 +189,7 @@ export type Database = {
           quantity?: number
           scientific_name?: string | null
           supplier_id?: string | null
+          supplier_name?: string | null
           unit?: string | null
           unit_price?: number
           updated_at?: string
