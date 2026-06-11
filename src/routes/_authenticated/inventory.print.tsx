@@ -43,6 +43,7 @@ function PrintCatalog() {
     bonus_quantity: category === "owned",
     unit_price: true,
     cost_price: false,
+    public_price: false,
     batch_number: category === "owned",
     expiry_date: category === "owned",
     supplier: false,
@@ -57,6 +58,7 @@ function PrintCatalog() {
     bonus_quantity: "البونص",
     unit_price: "سعر البيع",
     cost_price: "سعر التكلفة",
+    public_price: "سعر الجمهور",
     batch_number: "رقم الباتش",
     expiry_date: "تاريخ الانتهاء",
     supplier: "المورد",
@@ -132,6 +134,7 @@ function PrintCatalog() {
                 {fields.bonus_quantity && <th className="border border-black px-2 py-1.5 text-end">بونص</th>}
                 {fields.cost_price && <th className="border border-black px-2 py-1.5 text-end">التكلفة</th>}
                 {fields.unit_price && <th className="border border-black px-2 py-1.5 text-end">السعر</th>}
+                {fields.public_price && <th className="border border-black px-2 py-1.5 text-end">الجمهور</th>}
                 {fields.batch_number && <th className="border border-black px-2 py-1.5 text-start">الباتش</th>}
                 {fields.expiry_date && <th className="border border-black px-2 py-1.5 text-start">الانتهاء</th>}
               </tr>
@@ -149,8 +152,9 @@ function PrintCatalog() {
                   {fields.bonus_quantity && <td className="border border-black px-2 py-1 text-end font-mono">{it.bonus_quantity || 0}</td>}
                   {fields.cost_price && <td className="border border-black px-2 py-1 text-end font-mono">{formatMoney(it.cost_price)}</td>}
                   {fields.unit_price && <td className="border border-black px-2 py-1 text-end font-mono font-bold">{formatMoney(it.unit_price)}</td>}
+                  {fields.public_price && <td className="border border-black px-2 py-1 text-end font-mono">{formatMoney(it.public_price)}</td>}
                   {fields.batch_number && <td className="border border-black px-2 py-1" dir="ltr">{it.batch_number || "—"}</td>}
-                  {fields.expiry_date && <td className="border border-black px-2 py-1" dir="ltr">{it.expiry_date || "—"}</td>}
+                  {fields.expiry_date && <td className="border border-black px-2 py-1" dir="ltr">{it.expiry_date ? it.expiry_date.slice(0, 7) : "—"}</td>}
                 </tr>
               ))}
             </tbody>
