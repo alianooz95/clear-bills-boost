@@ -103,38 +103,70 @@ export type Database = {
       inventory_items: {
         Row: {
           batch_number: string | null
+          bonus_quantity: number
+          category: Database["public"]["Enums"]["product_category"]
+          cost_price: number
+          country: string | null
           created_at: string
           expiry_date: string | null
           id: string
           name: string
           owner_id: string
+          pharma_form: string | null
+          quantity: number
+          scientific_name: string | null
+          supplier_id: string | null
           unit: string | null
           unit_price: number
           updated_at: string
         }
         Insert: {
           batch_number?: string | null
+          bonus_quantity?: number
+          category?: Database["public"]["Enums"]["product_category"]
+          cost_price?: number
+          country?: string | null
           created_at?: string
           expiry_date?: string | null
           id?: string
           name: string
           owner_id: string
+          pharma_form?: string | null
+          quantity?: number
+          scientific_name?: string | null
+          supplier_id?: string | null
           unit?: string | null
           unit_price?: number
           updated_at?: string
         }
         Update: {
           batch_number?: string | null
+          bonus_quantity?: number
+          category?: Database["public"]["Enums"]["product_category"]
+          cost_price?: number
+          country?: string | null
           created_at?: string
           expiry_date?: string | null
           id?: string
           name?: string
           owner_id?: string
+          pharma_form?: string | null
+          quantity?: number
+          scientific_name?: string | null
+          supplier_id?: string | null
           unit?: string | null
           unit_price?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "inventory_items_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       invoice_items: {
         Row: {
@@ -627,6 +659,7 @@ export type Database = {
     Enums: {
       invoice_type: "sales" | "credit_note" | "quotation"
       payment_type: "cash" | "deferred_cash" | "credit"
+      product_category: "owned" | "negotiation" | "market"
       purchase_invoice_type: "purchase" | "debit_note"
     }
     CompositeTypes: {
@@ -757,6 +790,7 @@ export const Constants = {
     Enums: {
       invoice_type: ["sales", "credit_note", "quotation"],
       payment_type: ["cash", "deferred_cash", "credit"],
+      product_category: ["owned", "negotiation", "market"],
       purchase_invoice_type: ["purchase", "debit_note"],
     },
   },

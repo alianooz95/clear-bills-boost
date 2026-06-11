@@ -26,6 +26,7 @@ import { Route as AuthenticatedPurchasesNewRouteImport } from './routes/_authent
 import { Route as AuthenticatedPurchasesIdRouteImport } from './routes/_authenticated/purchases.$id'
 import { Route as AuthenticatedInvoicesNewRouteImport } from './routes/_authenticated/invoices.new'
 import { Route as AuthenticatedInvoicesIdRouteImport } from './routes/_authenticated/invoices.$id'
+import { Route as AuthenticatedInventoryPrintRouteImport } from './routes/_authenticated/inventory.print'
 import { Route as AuthenticatedCustomersIdRouteImport } from './routes/_authenticated/customers.$id'
 import { Route as AuthenticatedCustomersIdStatementRouteImport } from './routes/_authenticated/customers.$id.statement'
 import { Route as AuthenticatedInvoicesIdReceiptPaymentIdRouteImport } from './routes/_authenticated/invoices.$id.receipt.$paymentId'
@@ -125,6 +126,12 @@ const AuthenticatedInvoicesIdRoute = AuthenticatedInvoicesIdRouteImport.update({
   path: '/invoices/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedInventoryPrintRoute =
+  AuthenticatedInventoryPrintRouteImport.update({
+    id: '/inventory/print',
+    path: '/inventory/print',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedCustomersIdRoute =
   AuthenticatedCustomersIdRouteImport.update({
     id: '/customers/$id',
@@ -149,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/customers/$id': typeof AuthenticatedCustomersIdRouteWithChildren
+  '/inventory/print': typeof AuthenticatedInventoryPrintRoute
   '/invoices/$id': typeof AuthenticatedInvoicesIdRouteWithChildren
   '/invoices/new': typeof AuthenticatedInvoicesNewRoute
   '/purchases/$id': typeof AuthenticatedPurchasesIdRoute
@@ -170,6 +178,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/customers/$id': typeof AuthenticatedCustomersIdRouteWithChildren
+  '/inventory/print': typeof AuthenticatedInventoryPrintRoute
   '/invoices/$id': typeof AuthenticatedInvoicesIdRouteWithChildren
   '/invoices/new': typeof AuthenticatedInvoicesNewRoute
   '/purchases/$id': typeof AuthenticatedPurchasesIdRoute
@@ -193,6 +202,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/customers/$id': typeof AuthenticatedCustomersIdRouteWithChildren
+  '/_authenticated/inventory/print': typeof AuthenticatedInventoryPrintRoute
   '/_authenticated/invoices/$id': typeof AuthenticatedInvoicesIdRouteWithChildren
   '/_authenticated/invoices/new': typeof AuthenticatedInvoicesNewRoute
   '/_authenticated/purchases/$id': typeof AuthenticatedPurchasesIdRoute
@@ -216,6 +226,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/customers/$id'
+    | '/inventory/print'
     | '/invoices/$id'
     | '/invoices/new'
     | '/purchases/$id'
@@ -237,6 +248,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/customers/$id'
+    | '/inventory/print'
     | '/invoices/$id'
     | '/invoices/new'
     | '/purchases/$id'
@@ -259,6 +271,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/dashboard'
     | '/_authenticated/customers/$id'
+    | '/_authenticated/inventory/print'
     | '/_authenticated/invoices/$id'
     | '/_authenticated/invoices/new'
     | '/_authenticated/purchases/$id'
@@ -403,6 +416,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInvoicesIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/inventory/print': {
+      id: '/_authenticated/inventory/print'
+      path: '/inventory/print'
+      fullPath: '/inventory/print'
+      preLoaderRoute: typeof AuthenticatedInventoryPrintRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/customers/$id': {
       id: '/_authenticated/customers/$id'
       path: '/customers/$id'
@@ -460,6 +480,7 @@ const AuthenticatedInvoicesIdRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedCustomersIdRoute: typeof AuthenticatedCustomersIdRouteWithChildren
+  AuthenticatedInventoryPrintRoute: typeof AuthenticatedInventoryPrintRoute
   AuthenticatedInvoicesIdRoute: typeof AuthenticatedInvoicesIdRouteWithChildren
   AuthenticatedInvoicesNewRoute: typeof AuthenticatedInvoicesNewRoute
   AuthenticatedPurchasesIdRoute: typeof AuthenticatedPurchasesIdRoute
@@ -478,6 +499,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedCustomersIdRoute: AuthenticatedCustomersIdRouteWithChildren,
+  AuthenticatedInventoryPrintRoute: AuthenticatedInventoryPrintRoute,
   AuthenticatedInvoicesIdRoute: AuthenticatedInvoicesIdRouteWithChildren,
   AuthenticatedInvoicesNewRoute: AuthenticatedInvoicesNewRoute,
   AuthenticatedPurchasesIdRoute: AuthenticatedPurchasesIdRoute,
