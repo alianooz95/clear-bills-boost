@@ -10,6 +10,7 @@ const ItemInput = z.object({
   unit: z.string().max(50).optional().nullable(),
   unit_price: z.number().min(0), // sell price
   cost_price: z.number().min(0).default(0),
+  public_price: z.number().min(0).default(0),
   quantity: z.number().min(0).default(0),
   bonus_quantity: z.number().min(0).default(0),
   supplier_id: z.string().uuid().optional().nullable(),
@@ -49,6 +50,7 @@ export const createInventoryItem = createServerFn({ method: "POST" })
         unit: data.unit || "علبة",
         unit_price: data.unit_price,
         cost_price: data.cost_price,
+        public_price: data.public_price,
         quantity: data.quantity,
         bonus_quantity: data.bonus_quantity,
         supplier_id: data.supplier_id || null,
@@ -79,6 +81,7 @@ export const updateInventoryItem = createServerFn({ method: "POST" })
         unit: rest.unit || "علبة",
         unit_price: rest.unit_price,
         cost_price: rest.cost_price,
+        public_price: rest.public_price,
         quantity: rest.quantity,
         bonus_quantity: rest.bonus_quantity,
         supplier_id: rest.supplier_id || null,

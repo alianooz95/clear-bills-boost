@@ -38,6 +38,7 @@ type Item = {
   unit: string | null;
   unit_price: number;
   cost_price: number;
+  public_price: number;
   quantity: number;
   bonus_quantity: number;
   supplier_id: string | null;
@@ -135,13 +136,14 @@ function InventoryPage() {
                   <div className="text-xs text-muted-foreground flex flex-wrap gap-x-3 gap-y-1">
                     {it.suppliers?.name && <span>المورد: {it.suppliers.name}</span>}
                     {it.country && <span>المنشأ: {it.country}</span>}
-                    {it.expiry_date && <span>انتهاء: <span dir="ltr">{it.expiry_date}</span></span>}
+                    {it.expiry_date && <span>انتهاء: <span dir="ltr">{it.expiry_date.slice(0, 7)}</span></span>}
                     {it.batch_number && <span>باتش: <span dir="ltr">{it.batch_number}</span></span>}
                   </div>
                   <div className="text-xs flex flex-wrap gap-x-3">
                     <span>الكمية: <span className="font-mono font-semibold">{it.quantity}</span> {it.unit}</span>
                     {Number(it.bonus_quantity) > 0 && <span className="text-emerald-700">بونص: <span className="font-mono">{it.bonus_quantity}</span></span>}
                     <span>تكلفة: <span className="font-mono">{formatMoney(it.cost_price)}</span></span>
+                    {Number(it.public_price) > 0 && <span>جمهور: <span className="font-mono">{formatMoney(it.public_price)}</span></span>}
                   </div>
                 </div>
                 <div className="text-end shrink-0">
@@ -207,6 +209,7 @@ function ItemDialog({
   const [unit, setUnit] = useState("علبة");
   const [price, setPrice] = useState("0");
   const [cost, setCost] = useState("0");
+  const [publicPrice, setPublicPrice] = useState("0");
   const [qty, setQty] = useState("0");
   const [bonus, setBonus] = useState("0");
   const [country, setCountry] = useState("");
@@ -222,10 +225,11 @@ function ItemDialog({
     setScientific(editing?.scientific_name ?? "");
     setPharmaForm(editing?.pharma_form ?? "");
     setBatch(editing?.batch_number ?? "");
-    setExpiry(editing?.expiry_date ?? "");
+    setExpiry(editing?.expiry_date ? editing.expiry_date.slice(0, 7) : "");
     setUnit(editing?.unit ?? "علبة");
     setPrice(String(editing?.unit_price ?? "0"));
     setCost(String(editing?.cost_price ?? "0"));
+    setPublicPrice(String(editing?.public_price ?? "0"));
     setQty(String(editing?.quantity ?? "0"));
     setBonus(String(editing?.bonus_quantity ?? "0"));
     setCountry(editing?.country ?? "");
@@ -242,10 +246,11 @@ function ItemDialog({
         name: name.trim(),
         scientific_name: scientific.trim() || null,
         batch_number: batch.trim() || null,
-        expiry_date: expiry || null,
+        expiry_date: expiry ? `${expiry}-01` : null,
         unit: unit.trim() || "علبة",
         unit_price: Number(price) || 0,
         cost_price: Number(cost) || 0,
+        public_price: Number(publicPrice) || 0,
         quantity: Number(qty) || 0,
         bonus_quantity: Number(bonus) || 0,
         supplier_id: supplierId || null,
@@ -328,8 +333,12 @@ function ItemDialog({
               <Input className="font-mono" dir="ltr" type="number" min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label>تاريخ الانتهاء</Label>
-              <Input dir="ltr" type="date" value={expiry} onChange={(e) => setExpiry(e.target.value)} />
+              <Label>سعر الجمهور</Label>
+              <Input className="font-mono" dir="ltr" type="number" min="0" step="0.01" value={publicPrice} onChange={(e) => setPublicPrice(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>تاريخ الانتهاء (شهر/سنة)</Label>
+              <Input dir="ltr" type="month" value={expiry} onChange={(e) => setExpiry(e.target.value)} />
             </div>
             <div className="space-y-1.5">
               <Label>رقم الباتش</Label>
@@ -366,6 +375,7 @@ const PDF_FIELDS: { key: string; label: string }[] = [
   { key: "bonus_quantity", label: "البونص" },
   { key: "cost_price", label: "سعر التكلفة" },
   { key: "unit_price", label: "سعر البيع" },
+  { key: "public_price", label: "سعر الجمهور" },
   { key: "batch_number", label: "رقم الباتش" },
   { key: "expiry_date", label: "تاريخ الانتهاء" },
 ];
@@ -388,6 +398,7 @@ function PdfExportDialog({
     bonus_quantity: category === "owned",
     cost_price: false,
     unit_price: true,
+    public_price: false,
     batch_number: category === "owned",
     expiry_date: category === "owned",
   });
@@ -403,6 +414,7 @@ function PdfExportDialog({
       bonus_quantity: category === "owned",
       cost_price: false,
       unit_price: true,
+      public_price: false,
       batch_number: category === "owned",
       expiry_date: category === "owned",
     });
@@ -432,8 +444,9 @@ function PdfExportDialog({
           fields.bonus_quantity && td(String(it.bonus_quantity || 0), { end: true, ltr: true }),
           fields.cost_price && td(formatMoney(it.cost_price), { end: true, ltr: true }),
           fields.unit_price && td(formatMoney(it.unit_price), { end: true, ltr: true, bold: true }),
+          fields.public_price && td(formatMoney(it.public_price), { end: true, ltr: true }),
           fields.batch_number && td(esc(it.batch_number), { ltr: true }),
-          fields.expiry_date && td(esc(it.expiry_date), { ltr: true }),
+          fields.expiry_date && td(esc(it.expiry_date ? it.expiry_date.slice(0, 7) : null), { ltr: true }),
         ].filter(Boolean).join("");
         return `<tr>${cells}</tr>`;
       }).join("");
@@ -449,6 +462,7 @@ function PdfExportDialog({
         fields.bonus_quantity && th("بونص", true),
         fields.cost_price && th("التكلفة", true),
         fields.unit_price && th("السعر", true),
+        fields.public_price && th("الجمهور", true),
         fields.batch_number && th("الباتش"),
         fields.expiry_date && th("الانتهاء"),
       ].filter(Boolean).join("");
@@ -552,7 +566,7 @@ function ConvertDialog({
     setQty(String(item?.quantity ?? "0"));
     setBonus(String(item?.bonus_quantity ?? "0"));
     setBatch(item?.batch_number ?? "");
-    setExpiry(item?.expiry_date ?? "");
+    setExpiry(item?.expiry_date ? item.expiry_date.slice(0, 7) : "");
   });
 
   const convertFn = useServerFn(convertToOwned);
@@ -567,7 +581,7 @@ function ConvertDialog({
           quantity: Number(qty) || 0,
           bonus_quantity: Number(bonus) || 0,
           batch_number: batch.trim() || null,
-          expiry_date: expiry || null,
+          expiry_date: expiry ? `${expiry}-01` : null,
           supplier_id: item.supplier_id,
           pharma_form: item.pharma_form,
           country: item.country,
@@ -608,8 +622,8 @@ function ConvertDialog({
             <Input dir="ltr" value={batch} onChange={(e) => setBatch(e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <Label>تاريخ الانتهاء</Label>
-            <Input dir="ltr" type="date" value={expiry} onChange={(e) => setExpiry(e.target.value)} />
+            <Label>تاريخ الانتهاء (شهر/سنة)</Label>
+            <Input dir="ltr" type="month" value={expiry} onChange={(e) => setExpiry(e.target.value)} />
           </div>
         </div>
         <DialogFooter>

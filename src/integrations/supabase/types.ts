@@ -113,6 +113,7 @@ export type Database = {
           name: string
           owner_id: string
           pharma_form: string | null
+          public_price: number
           quantity: number
           scientific_name: string | null
           supplier_id: string | null
@@ -132,6 +133,7 @@ export type Database = {
           name: string
           owner_id: string
           pharma_form?: string | null
+          public_price?: number
           quantity?: number
           scientific_name?: string | null
           supplier_id?: string | null
@@ -151,6 +153,7 @@ export type Database = {
           name?: string
           owner_id?: string
           pharma_form?: string | null
+          public_price?: number
           quantity?: number
           scientific_name?: string | null
           supplier_id?: string | null
