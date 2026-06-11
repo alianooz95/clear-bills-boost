@@ -10,6 +10,7 @@ import {
   convertToOwned,
 } from "@/lib/inventory/inventory.functions";
 import { listSuppliers } from "@/lib/suppliers/suppliers.functions";
+import { getCompanySettings, upsertCompanySettings } from "@/lib/company/company.functions";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -357,6 +358,80 @@ function ItemDialog({
   );
 }
 
+function PdfHeaderFooterPreview({
+  category, count, company,
+}: { category: Category; count: number; company: CompanyInfo }) {
+  const todayLong = new Date().toLocaleDateString("ar-EG", { year: "numeric", month: "long", day: "numeric" });
+  const { brand, brandTo, border, text, muted } = PDF_THEME;
+  return (
+    <div className="space-y-1">
+      <p className="text-xs font-semibold text-muted-foreground">معاينة الهيدر والفوتر</p>
+      <div
+        dir="rtl"
+        className="overflow-hidden rounded-lg border shadow-sm"
+        style={{ fontFamily: "'Tajawal','Cairo','Segoe UI',Arial,sans-serif", color: text, background: "#fff" }}
+      >
+        {/* Header */}
+        <div
+          className="relative px-4 py-3 text-white"
+          style={{ background: `linear-gradient(135deg, ${brand} 0%, ${brandTo} 100%)` }}
+        >
+          <div className="flex items-center justify-between gap-3 relative">
+            <div className="flex items-center gap-2 min-w-0">
+              {company.logo_data_url ? (
+                <img
+                  src={company.logo_data_url}
+                  alt=""
+                  className="h-9 w-auto max-w-[60px] rounded bg-white p-1 object-contain"
+                />
+              ) : (
+                <div className="h-9 w-9 rounded-md bg-white/20 flex items-center justify-center text-sm font-extrabold">
+                  {(company.name || "O").trim().charAt(0)}
+                </div>
+              )}
+              <div className="min-w-0">
+                <div className="text-[8px] tracking-[.25em] opacity-85 truncate">
+                  {(company.name || "Oplus Pharma").toUpperCase()}
+                </div>
+                <div className="text-[13px] font-bold leading-tight truncate">{CAT_LABEL[category]}</div>
+                {company.address && <div className="text-[9px] opacity-90 truncate">{company.address}</div>}
+              </div>
+            </div>
+            <div className="text-end text-[9px] shrink-0">
+              <div className="opacity-75">تاريخ الإصدار</div>
+              <div className="font-semibold text-[10px]">{todayLong}</div>
+              <div className="mt-1 inline-block rounded-full bg-white/20 px-1.5 py-0.5 text-[9px] font-semibold">
+                {count} صنف
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* Body placeholder */}
+        <div className="px-4 py-3 text-[10px]" style={{ color: muted }}>
+          ··· جدول المنتجات ···
+        </div>
+        {/* Footer */}
+        <div
+          className="px-4 py-2 text-[9px] flex justify-between gap-3"
+          style={{ borderTop: `1px solid ${border}`, color: muted }}
+        >
+          <div className="leading-snug min-w-0">
+            <div className="font-bold text-[10px]" style={{ color: text }}>
+              {company.name || "Oplus Pharma"}
+            </div>
+            {company.address && <div className="truncate">{company.address}</div>}
+            {company.phone && <div dir="ltr" className="font-mono truncate">{company.phone}</div>}
+          </div>
+          <div className="text-end leading-snug shrink-0">
+            <div>الأسعار قابلة للتغيير دون إشعار مسبق.</div>
+            <div>© {new Date().getFullYear()}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Tiny helper: re-run effect when `open` flips to true
 import { useEffect } from "react";
 function useStateReset(open: boolean, fn: () => void) {
@@ -386,18 +461,53 @@ const CAT_LABEL: Record<Category, string> = {
   market: "أسعار السوق المرجعية",
 };
 
-type CompanyInfo = { name: string; address: string; phone: string; logo: string };
-const COMPANY_KEY = "oplus.company.info";
-const DEFAULT_COMPANY: CompanyInfo = { name: "Oplus Pharma", address: "", phone: "", logo: "" };
-function loadCompany(): CompanyInfo {
-  if (typeof window === "undefined") return DEFAULT_COMPANY;
-  try {
-    const raw = localStorage.getItem(COMPANY_KEY);
-    return raw ? { ...DEFAULT_COMPANY, ...JSON.parse(raw) } : DEFAULT_COMPANY;
-  } catch { return DEFAULT_COMPANY; }
-}
-function saveCompany(c: CompanyInfo) {
-  try { localStorage.setItem(COMPANY_KEY, JSON.stringify(c)); } catch {}
+type CompanyInfo = { name: string; address: string; phone: string; logo_data_url: string };
+const DEFAULT_COMPANY: CompanyInfo = { name: "Oplus Pharma", address: "", phone: "", logo_data_url: "" };
+
+// PDF theme tokens (shared between live preview and exported PDF)
+const PDF_THEME = {
+  brand: "#0f766e",
+  brandTo: "#14b8a6",
+  brandSoft: "#ecfdf5",
+  border: "#e5e7eb",
+  text: "#111827",
+  muted: "#6b7280",
+};
+
+// Embed Tajawal Arabic font as a data URL so html2canvas always renders Arabic
+// correctly — even on first run before the browser has cached Google Fonts.
+let _embeddedFontCss: string | null = null;
+let _embeddedFontPromise: Promise<string> | null = null;
+async function getEmbeddedArabicFontCss(): Promise<string> {
+  if (_embeddedFontCss !== null) return _embeddedFontCss;
+  if (_embeddedFontPromise) return _embeddedFontPromise;
+  _embeddedFontPromise = (async () => {
+    try {
+      const FONTS: { weight: number; url: string }[] = [
+        { weight: 400, url: "https://fonts.gstatic.com/s/tajawal/v9/Iurf6YBj_oCad4k1l_6gLrZjiLlJ-G0.woff2" },
+        { weight: 700, url: "https://fonts.gstatic.com/s/tajawal/v9/Iurf6YBj_oCad4k1l_6gLrZjiLlJ_G0.woff2" },
+      ];
+      const faces = await Promise.all(FONTS.map(async (f) => {
+        const res = await fetch(f.url);
+        const buf = await res.arrayBuffer();
+        let bin = "";
+        const bytes = new Uint8Array(buf);
+        for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+        const b64 = btoa(bin);
+        return `@font-face{font-family:'TajawalPDF';font-style:normal;font-weight:${f.weight};font-display:swap;src:url(data:font/woff2;base64,${b64}) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+08A0-08FF,U+FB50-FDFF,U+FE70-FEFF,U+0020-007E;}`;
+      }));
+      _embeddedFontCss = faces.join("\n");
+      // Register with document.fonts so html2canvas can resolve glyphs
+      try {
+        await Promise.all(FONTS.map((f) => document.fonts.load(`${f.weight} 16px TajawalPDF`)));
+      } catch {}
+      return _embeddedFontCss;
+    } catch {
+      _embeddedFontCss = "";
+      return "";
+    }
+  })();
+  return _embeddedFontPromise;
 }
 
 function PdfExportDialog({
@@ -419,24 +529,45 @@ function PdfExportDialog({
   const [busy, setBusy] = useState(false);
   const [company, setCompany] = useState<CompanyInfo>(DEFAULT_COMPANY);
   const [showSettings, setShowSettings] = useState(false);
+  const [savingCompany, setSavingCompany] = useState(false);
 
-  useStateReset(open, () => {
-    setCompany(loadCompany());
+  const getCompanyFn = useServerFn(getCompanySettings);
+  const upsertCompanyFn = useServerFn(upsertCompanySettings);
+  const { data: serverCompany } = useQuery({
+    queryKey: ["company-settings"],
+    queryFn: () => getCompanyFn(),
+    staleTime: 60_000,
   });
+  useEffect(() => {
+    if (serverCompany) setCompany({ ...DEFAULT_COMPANY, ...serverCompany });
+  }, [serverCompany]);
 
+  // Preload the embedded Arabic font when the dialog opens
+  useEffect(() => { if (open) void getEmbeddedArabicFontCss(); }, [open]);
+
+  // Debounced auto-save to the server
+  const saveTimer = (globalThis as any)._companySaveTimer as { id: number | null } | undefined;
   const updateCompany = (patch: Partial<CompanyInfo>) => {
     setCompany((c) => {
       const next = { ...c, ...patch };
-      saveCompany(next);
+      const t = (globalThis as any)._companySaveTimer ||= { id: null as number | null };
+      if (t.id) window.clearTimeout(t.id);
+      t.id = window.setTimeout(() => {
+        setSavingCompany(true);
+        upsertCompanyFn({ data: next })
+          .catch((e: Error) => toast.error("تعذّر حفظ بيانات الشركة: " + e.message))
+          .finally(() => setSavingCompany(false));
+      }, 600);
       return next;
     });
   };
+  void saveTimer;
 
   const onLogoFile = (file: File | null) => {
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) { toast.error("حجم الشعار أكبر من 2MB"); return; }
+    if (file.size > 1.5 * 1024 * 1024) { toast.error("حجم الشعار أكبر من 1.5MB"); return; }
     const reader = new FileReader();
-    reader.onload = () => updateCompany({ logo: String(reader.result || "") });
+    reader.onload = () => updateCompany({ logo_data_url: String(reader.result || "") });
     reader.readAsDataURL(file);
   };
 
@@ -510,15 +641,18 @@ function PdfExportDialog({
       ].filter(Boolean).join("");
 
       const todayLong = new Date().toLocaleDateString("ar-EG", { year: "numeric", month: "long", day: "numeric" });
+      // Pre-load embedded Arabic font (data URL) so Arabic always renders correctly
+      const fontCss = await getEmbeddedArabicFontCss();
       const container = document.createElement("div");
       container.lang = "ar";
       container.dir = "rtl";
-      container.style.cssText = `position:fixed;left:-10000px;top:0;width:900px;background:#ffffff;color:${TEXT};direction:rtl;font-family:'Tajawal','Cairo','Segoe UI',Arial,sans-serif;`;
-      const logoHtml = company.logo
-        ? `<img src="${company.logo}" crossorigin="anonymous" style="height:56px;width:auto;max-width:140px;object-fit:contain;background:#fff;padding:6px;border-radius:10px;" />`
+      container.style.cssText = `position:fixed;left:-10000px;top:0;width:900px;background:#ffffff;color:${TEXT};direction:rtl;font-family:'TajawalPDF','Tajawal','Cairo','Segoe UI',Arial,sans-serif;`;
+      const logoHtml = company.logo_data_url
+        ? `<img src="${company.logo_data_url}" crossorigin="anonymous" style="height:56px;width:auto;max-width:140px;object-fit:contain;background:#fff;padding:6px;border-radius:10px;" />`
         : `<div style="height:56px;width:56px;border-radius:12px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:22px;">${esc((company.name || "O").trim().charAt(0))}</div>`;
       const addressLine = company.address ? `<div style="font-size:11px;opacity:.85;margin-top:4px;">${esc(company.address)}</div>` : "";
       container.innerHTML = `
+        <style>${fontCss}</style>
         <div style="background:linear-gradient(135deg,${BRAND} 0%,#14b8a6 100%);padding:28px 32px;color:#fff;position:relative;overflow:hidden;">
           <div style="position:absolute;inset:0;background:radial-gradient(circle at 90% 20%,rgba(255,255,255,.18),transparent 50%);"></div>
           <div style="display:flex;justify-content:space-between;align-items:center;position:relative;gap:16px;">
@@ -562,14 +696,12 @@ function PdfExportDialog({
       document.body.appendChild(container);
 
       try {
-        // Ensure Arabic webfont is ready before rasterizing — otherwise html2canvas
-        // renders glyphs from a fallback font and Arabic looks broken.
+        // Ensure the embedded font is actually registered before rasterizing.
         if (document.fonts) {
           try {
             await Promise.all([
-              document.fonts.load("700 22px Tajawal"),
-              document.fonts.load("500 11px Tajawal"),
-              document.fonts.load("400 11px Tajawal"),
+              document.fonts.load("700 22px TajawalPDF"),
+              document.fonts.load("400 12px TajawalPDF"),
             ]);
             await document.fonts.ready;
           } catch {}
@@ -620,6 +752,7 @@ function PdfExportDialog({
           <DialogTitle>تصدير PDF — {CAT_LABEL[category]}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
+          <PdfHeaderFooterPreview category={category} count={items.length} company={company} />
           <p className="text-xs text-muted-foreground">اختر الأعمدة التي ستظهر في الملف:</p>
           <div className="grid grid-cols-2 gap-2">
             {PDF_FIELDS.map((f) => (
@@ -636,6 +769,7 @@ function PdfExportDialog({
               onClick={() => setShowSettings((s) => !s)}
             >
               {showSettings ? "إخفاء" : "إعدادات الشركة (يظهر في الهيدر والفوتر)"}
+              {savingCompany && <span className="ms-2 text-muted-foreground">جاري الحفظ…</span>}
             </button>
             {showSettings && (
               <div className="space-y-2 rounded-md border bg-muted/30 p-3">
@@ -667,8 +801,8 @@ function PdfExportDialog({
                 <div className="space-y-1">
                   <Label className="text-xs">شعار الشركة (PNG/JPG، حد أقصى 2MB)</Label>
                   <div className="flex items-center gap-2">
-                    {company.logo && (
-                      <img src={company.logo} alt="logo" className="h-10 w-10 rounded border bg-white object-contain" />
+                    {company.logo_data_url && (
+                      <img src={company.logo_data_url} alt="logo" className="h-10 w-10 rounded border bg-white object-contain" />
                     )}
                     <Input
                       type="file"
@@ -676,8 +810,8 @@ function PdfExportDialog({
                       onChange={(e) => onLogoFile(e.target.files?.[0] ?? null)}
                       className="text-xs"
                     />
-                    {company.logo && (
-                      <Button type="button" variant="ghost" size="sm" onClick={() => updateCompany({ logo: "" })}>
+                    {company.logo_data_url && (
+                      <Button type="button" variant="ghost" size="sm" onClick={() => updateCompany({ logo_data_url: "" })}>
                         حذف
                       </Button>
                     )}
