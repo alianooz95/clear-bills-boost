@@ -7,6 +7,7 @@ import {
   createInventoryItem,
   updateInventoryItem,
   deleteInventoryItem,
+  convertToOwned,
 } from "@/lib/inventory/inventory.functions";
 import { listSuppliers } from "@/lib/suppliers/suppliers.functions";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,7 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Pencil, Trash2, Package, Printer } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Package, Printer, ArrowRightLeft } from "lucide-react";
 import { formatMoney } from "@/lib/invoices/invoice-math";
 import { toast } from "sonner";
 
@@ -57,6 +58,7 @@ function InventoryPage() {
   const [category, setCategory] = useState<Category>("owned");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Item | null>(null);
+  const [converting, setConverting] = useState<Item | null>(null);
 
   const listFn = useServerFn(listInventory);
   const { data: items, isLoading } = useQuery({
@@ -142,6 +144,13 @@ function InventoryPage() {
                   <div className="font-mono font-bold text-lg">{formatMoney(it.unit_price)}</div>
                 </div>
                 <div className="flex gap-1 shrink-0">
+                  {it.category === "negotiation" && (
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-700"
+                      title="تحويل إلى منتجاتي"
+                      onClick={() => setConverting(it)}>
+                      <ArrowRightLeft className="h-4 w-4" />
+                    </Button>
+                  )}
                   <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditing(it); setOpen(true); }}>
                     <Pencil className="h-4 w-4" />
                   </Button>
@@ -159,6 +168,12 @@ function InventoryPage() {
       <ItemDialog open={open} onOpenChange={setOpen} editing={editing} defaultCategory={category} onSaved={() => {
         qc.invalidateQueries({ queryKey: ["inventory"] });
       }} />
+
+      <ConvertDialog
+        item={converting}
+        onClose={() => setConverting(null)}
+        onDone={() => { qc.invalidateQueries({ queryKey: ["inventory"] }); setConverting(null); }}
+      />
     </div>
   );
 }
@@ -328,4 +343,91 @@ function useStateReset(open: boolean, fn: () => void) {
     if (open) fn();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
+}
+
+function ConvertDialog({
+  item, onClose, onDone,
+}: { item: Item | null; onClose: () => void; onDone: () => void }) {
+  const [price, setPrice] = useState("0");
+  const [cost, setCost] = useState("0");
+  const [qty, setQty] = useState("0");
+  const [bonus, setBonus] = useState("0");
+  const [batch, setBatch] = useState("");
+  const [expiry, setExpiry] = useState("");
+
+  useStateReset(!!item, () => {
+    setPrice(String(item?.unit_price ?? "0"));
+    setCost(String(item?.cost_price ?? "0"));
+    setQty(String(item?.quantity ?? "0"));
+    setBonus(String(item?.bonus_quantity ?? "0"));
+    setBatch(item?.batch_number ?? "");
+    setExpiry(item?.expiry_date ?? "");
+  });
+
+  const convertFn = useServerFn(convertToOwned);
+  const run = useMutation({
+    mutationFn: async () => {
+      if (!item) return;
+      return convertFn({
+        data: {
+          id: item.id,
+          unit_price: Number(price) || 0,
+          cost_price: Number(cost) || 0,
+          quantity: Number(qty) || 0,
+          bonus_quantity: Number(bonus) || 0,
+          batch_number: batch.trim() || null,
+          expiry_date: expiry || null,
+          supplier_id: item.supplier_id,
+          pharma_form: item.pharma_form,
+          country: item.country,
+          unit: item.unit,
+        },
+      });
+    },
+    onSuccess: () => { toast.success("تم التحويل إلى منتجاتي"); onDone(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <Dialog open={!!item} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>تحويل إلى منتجاتي — {item?.name}</DialogTitle>
+        </DialogHeader>
+        <p className="text-xs text-muted-foreground">راجع وعدّل البيانات قبل النقل إلى المخزون.</p>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label>سعر البيع</Label>
+            <Input className="font-mono" dir="ltr" type="number" min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>سعر التكلفة</Label>
+            <Input className="font-mono" dir="ltr" type="number" min="0" step="0.01" value={cost} onChange={(e) => setCost(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>الكمية</Label>
+            <Input className="font-mono" dir="ltr" type="number" min="0" step="0.01" value={qty} onChange={(e) => setQty(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>البونص</Label>
+            <Input className="font-mono" dir="ltr" type="number" min="0" step="0.01" value={bonus} onChange={(e) => setBonus(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>رقم الباتش</Label>
+            <Input dir="ltr" value={batch} onChange={(e) => setBatch(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>تاريخ الانتهاء</Label>
+            <Input dir="ltr" type="date" value={expiry} onChange={(e) => setExpiry(e.target.value)} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>إلغاء</Button>
+          <Button onClick={() => run.mutate()} disabled={run.isPending}>
+            {run.isPending ? "جاري التحويل…" : "تحويل إلى منتجاتي"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 }

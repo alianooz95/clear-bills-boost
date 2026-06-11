@@ -104,3 +104,42 @@ export const deleteInventoryItem = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+const ConvertInput = z.object({
+  id: z.string().uuid(),
+  unit_price: z.number().min(0),
+  cost_price: z.number().min(0),
+  quantity: z.number().min(0),
+  bonus_quantity: z.number().min(0).default(0),
+  batch_number: z.string().optional().nullable(),
+  expiry_date: z.string().optional().nullable(),
+  supplier_id: z.string().uuid().optional().nullable(),
+  pharma_form: z.string().optional().nullable(),
+  country: z.string().optional().nullable(),
+  unit: z.string().optional().nullable(),
+});
+
+export const convertToOwned = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => ConvertInput.parse(data))
+  .handler(async ({ data, context }) => {
+    const { id, ...rest } = data;
+    const { error } = await context.supabase
+      .from("inventory_items")
+      .update({
+        category: "owned",
+        unit_price: rest.unit_price,
+        cost_price: rest.cost_price,
+        quantity: rest.quantity,
+        bonus_quantity: rest.bonus_quantity,
+        batch_number: rest.batch_number || null,
+        expiry_date: rest.expiry_date || null,
+        supplier_id: rest.supplier_id || null,
+        pharma_form: rest.pharma_form || null,
+        country: rest.country || null,
+        unit: rest.unit || "علبة",
+      })
+      .eq("id", id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
