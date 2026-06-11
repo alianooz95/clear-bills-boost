@@ -454,7 +454,7 @@ function PdfExportDialog({
       ].filter(Boolean).join("");
 
       const container = document.createElement("div");
-      container.style.cssText = "position:fixed;left:-10000px;top:0;width:900px;background:white;color:black;padding:24px;direction:rtl;font-family:'Cairo','Tajawal',Arial,sans-serif;";
+      container.style.cssText = "position:fixed;left:-10000px;top:0;width:900px;background:#ffffff;color:#000000;padding:24px;direction:rtl;font-family:'Cairo','Tajawal',Arial,sans-serif;";
       container.innerHTML = `
         <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:12px;margin-bottom:16px;">
           <h2 style="font-size:20px;font-weight:700;margin:0;">Oplus Pharma</h2>
@@ -468,18 +468,37 @@ function PdfExportDialog({
       `;
       document.body.appendChild(container);
 
-      const html2pdf = (await import("html2pdf.js")).default;
-      await html2pdf()
-        .from(container)
-        .set({
-          margin: 10,
-          filename: `${CAT_LABEL[category]}-${today}.pdf`,
-          image: { type: "jpeg", quality: 0.95 },
-          html2canvas: { scale: 2, useCORS: true },
-          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-        })
-        .save();
-      document.body.removeChild(container);
+      try {
+        const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+          import("html2canvas-pro"),
+          import("jspdf"),
+        ]);
+        const canvas = await html2canvas(container, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: "#ffffff",
+        });
+        const imgData = canvas.toDataURL("image/jpeg", 0.95);
+        const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+        const pageW = pdf.internal.pageSize.getWidth();
+        const pageH = pdf.internal.pageSize.getHeight();
+        const margin = 10;
+        const imgW = pageW - margin * 2;
+        const imgH = (canvas.height * imgW) / canvas.width;
+        let heightLeft = imgH;
+        let position = margin;
+        pdf.addImage(imgData, "JPEG", margin, position, imgW, imgH);
+        heightLeft -= pageH - margin * 2;
+        while (heightLeft > 0) {
+          position = margin - (imgH - heightLeft);
+          pdf.addPage();
+          pdf.addImage(imgData, "JPEG", margin, position, imgW, imgH);
+          heightLeft -= pageH - margin * 2;
+        }
+        pdf.save(`${CAT_LABEL[category]}-${today}.pdf`);
+      } finally {
+        document.body.removeChild(container);
+      }
       toast.success("تم تصدير PDF");
       onOpenChange(false);
     } catch (e: any) {
