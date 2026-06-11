@@ -16,12 +16,12 @@ const ItemInput = z.object({
   supplier_id: z.string().uuid().optional().nullable(),
   pharma_form: z.string().max(100).optional().nullable(),
   country: z.string().max(100).optional().nullable(),
-  category: z.enum(["owned", "negotiation", "market"]).default("owned"),
+  category: z.enum(["owned", "negotiation", "market", "import"]).default("owned"),
 });
 
 export const listInventory = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { search?: string; category?: "owned" | "negotiation" | "market" } | undefined) => data ?? {})
+  .inputValidator((data: { search?: string; category?: "owned" | "negotiation" | "market" | "import" } | undefined) => data ?? {})
   .handler(async ({ data, context }) => {
     let q = context.supabase
       .from("inventory_items")
