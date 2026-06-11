@@ -123,3 +123,108 @@ export const getCustomerLedger = createServerFn({ method: "GET" })
       },
     };
   });
+
+export const getCustomerFullLedger = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { customerId: string }) =>
+    z.object({ customerId: z.string().uuid() }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const [
+      { data: customer, error: cErr },
+      { data: invoices, error: iErr },
+      { data: payments, error: pErr },
+    ] = await Promise.all([
+      context.supabase.from("customers").select("*").eq("id", data.customerId).maybeSingle(),
+      context.supabase
+        .from("invoices")
+        .select("id, invoice_number, invoice_type, invoice_date, total, payment_type, due_date, created_at, invoice_payments(amount)")
+        .eq("customer_id", data.customerId)
+        .order("invoice_date", { ascending: true })
+        .order("created_at", { ascending: true }),
+      context.supabase
+        .from("invoice_payments")
+        .select("id, amount, payment_date, method, reference, notes, created_at, invoice_id, invoices(invoice_number, customer_id, invoice_type)")
+        .order("payment_date", { ascending: true })
+        .order("created_at", { ascending: true }),
+    ]);
+    if (cErr) throw new Error(cErr.message);
+    if (iErr) throw new Error(iErr.message);
+    if (pErr) throw new Error(pErr.message);
+    if (!customer) throw new Error("العميل غير موجود");
+
+    const customerPayments = (payments ?? []).filter(
+      (p: any) => p.invoices?.customer_id === data.customerId,
+    );
+
+    let totalSales = 0;
+    let totalCredits = 0;
+    const invoiceRows = (invoices ?? []).map((inv: any) => {
+      const total = Number(inv.total);
+      const paid = (inv.invoice_payments ?? []).reduce(
+        (s: number, p: any) => s + Number(p.amount), 0,
+      );
+      const remaining = total - paid;
+      if (inv.invoice_type === "sales") totalSales += total;
+      else if (inv.invoice_type === "credit_note") totalCredits += total;
+      return { ...inv, paid, remaining };
+    });
+    const totalPaid = customerPayments.reduce((s, p: any) => s + Number(p.amount), 0);
+
+    // Build unified statement (invoices as debit/credit, payments as credit)
+    type Mvt = {
+      key: string;
+      date: string;
+      ref: string;
+      type: "sales" | "credit_note" | "payment";
+      desc: string;
+      debit: number;
+      credit: number;
+      running: number;
+    };
+    const events: Omit<Mvt, "running">[] = [];
+    for (const inv of invoices ?? []) {
+      if (inv.invoice_type === "quotation") continue;
+      events.push({
+        key: "i-" + inv.id,
+        date: inv.invoice_date,
+        ref: inv.invoice_number,
+        type: inv.invoice_type as "sales" | "credit_note",
+        desc: inv.invoice_type === "sales" ? "فاتورة مبيعات" : "إشعار دائن",
+        debit: inv.invoice_type === "sales" ? Number(inv.total) : 0,
+        credit: inv.invoice_type === "credit_note" ? Number(inv.total) : 0,
+      });
+    }
+    for (const p of customerPayments) {
+      events.push({
+        key: "p-" + p.id,
+        date: p.payment_date,
+        ref: (p as any).invoices?.invoice_number ?? "",
+        type: "payment",
+        desc: "تحصيل" + (p.reference ? ` — ${p.reference}` : ""),
+        debit: 0,
+        credit: Number(p.amount),
+      });
+    }
+    events.sort((a, b) =>
+      a.date === b.date ? a.key.localeCompare(b.key) : a.date.localeCompare(b.date),
+    );
+    let running = 0;
+    const statement: Mvt[] = events.map((e) => {
+      running += e.debit - e.credit;
+      return { ...e, running };
+    });
+
+    return {
+      customer,
+      invoices: invoiceRows,
+      payments: customerPayments,
+      statement,
+      summary: {
+        total_sales: totalSales,
+        total_credits: totalCredits,
+        total_paid: totalPaid,
+        balance: Number(customer.balance),
+      },
+    };
+  });
