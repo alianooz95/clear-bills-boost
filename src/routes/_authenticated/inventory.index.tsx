@@ -358,6 +358,80 @@ function ItemDialog({
   );
 }
 
+function PdfHeaderFooterPreview({
+  category, count, company,
+}: { category: Category; count: number; company: CompanyInfo }) {
+  const todayLong = new Date().toLocaleDateString("ar-EG", { year: "numeric", month: "long", day: "numeric" });
+  const { brand, brandTo, border, text, muted } = PDF_THEME;
+  return (
+    <div className="space-y-1">
+      <p className="text-xs font-semibold text-muted-foreground">معاينة الهيدر والفوتر</p>
+      <div
+        dir="rtl"
+        className="overflow-hidden rounded-lg border shadow-sm"
+        style={{ fontFamily: "'Tajawal','Cairo','Segoe UI',Arial,sans-serif", color: text, background: "#fff" }}
+      >
+        {/* Header */}
+        <div
+          className="relative px-4 py-3 text-white"
+          style={{ background: `linear-gradient(135deg, ${brand} 0%, ${brandTo} 100%)` }}
+        >
+          <div className="flex items-center justify-between gap-3 relative">
+            <div className="flex items-center gap-2 min-w-0">
+              {company.logo_data_url ? (
+                <img
+                  src={company.logo_data_url}
+                  alt=""
+                  className="h-9 w-auto max-w-[60px] rounded bg-white p-1 object-contain"
+                />
+              ) : (
+                <div className="h-9 w-9 rounded-md bg-white/20 flex items-center justify-center text-sm font-extrabold">
+                  {(company.name || "O").trim().charAt(0)}
+                </div>
+              )}
+              <div className="min-w-0">
+                <div className="text-[8px] tracking-[.25em] opacity-85 truncate">
+                  {(company.name || "Oplus Pharma").toUpperCase()}
+                </div>
+                <div className="text-[13px] font-bold leading-tight truncate">{CAT_LABEL[category]}</div>
+                {company.address && <div className="text-[9px] opacity-90 truncate">{company.address}</div>}
+              </div>
+            </div>
+            <div className="text-end text-[9px] shrink-0">
+              <div className="opacity-75">تاريخ الإصدار</div>
+              <div className="font-semibold text-[10px]">{todayLong}</div>
+              <div className="mt-1 inline-block rounded-full bg-white/20 px-1.5 py-0.5 text-[9px] font-semibold">
+                {count} صنف
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* Body placeholder */}
+        <div className="px-4 py-3 text-[10px]" style={{ color: muted }}>
+          ··· جدول المنتجات ···
+        </div>
+        {/* Footer */}
+        <div
+          className="px-4 py-2 text-[9px] flex justify-between gap-3"
+          style={{ borderTop: `1px solid ${border}`, color: muted }}
+        >
+          <div className="leading-snug min-w-0">
+            <div className="font-bold text-[10px]" style={{ color: text }}>
+              {company.name || "Oplus Pharma"}
+            </div>
+            {company.address && <div className="truncate">{company.address}</div>}
+            {company.phone && <div dir="ltr" className="font-mono truncate">{company.phone}</div>}
+          </div>
+          <div className="text-end leading-snug shrink-0">
+            <div>الأسعار قابلة للتغيير دون إشعار مسبق.</div>
+            <div>© {new Date().getFullYear()}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Tiny helper: re-run effect when `open` flips to true
 import { useEffect } from "react";
 function useStateReset(open: boolean, fn: () => void) {
