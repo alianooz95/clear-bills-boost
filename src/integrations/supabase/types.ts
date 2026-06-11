@@ -284,6 +284,240 @@ export type Database = {
           },
         ]
       }
+      purchase_invoice_items: {
+        Row: {
+          batch_number: string | null
+          bonus_quantity: number
+          discount_amount: number
+          expiry_date: string | null
+          id: string
+          inventory_item_id: string | null
+          invoice_id: string
+          item_name: string
+          line_total: number
+          sold_quantity: number
+          unit: string | null
+          unit_price: number
+        }
+        Insert: {
+          batch_number?: string | null
+          bonus_quantity?: number
+          discount_amount?: number
+          expiry_date?: string | null
+          id?: string
+          inventory_item_id?: string | null
+          invoice_id: string
+          item_name: string
+          line_total?: number
+          sold_quantity?: number
+          unit?: string | null
+          unit_price?: number
+        }
+        Update: {
+          batch_number?: string | null
+          bonus_quantity?: number
+          discount_amount?: number
+          expiry_date?: string | null
+          id?: string
+          inventory_item_id?: string | null
+          invoice_id?: string
+          item_name?: string
+          line_total?: number
+          sold_quantity?: number
+          unit?: string | null
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_invoices: {
+        Row: {
+          created_at: string
+          discount_total: number
+          due_date: string | null
+          id: string
+          invoice_date: string
+          invoice_number: string
+          invoice_type: Database["public"]["Enums"]["purchase_invoice_type"]
+          notes: string | null
+          owner_id: string
+          payment_type: Database["public"]["Enums"]["payment_type"]
+          subtotal: number
+          supplier_id: string
+          total: number
+        }
+        Insert: {
+          created_at?: string
+          discount_total?: number
+          due_date?: string | null
+          id?: string
+          invoice_date?: string
+          invoice_number: string
+          invoice_type: Database["public"]["Enums"]["purchase_invoice_type"]
+          notes?: string | null
+          owner_id: string
+          payment_type?: Database["public"]["Enums"]["payment_type"]
+          subtotal?: number
+          supplier_id: string
+          total?: number
+        }
+        Update: {
+          created_at?: string
+          discount_total?: number
+          due_date?: string | null
+          id?: string
+          invoice_date?: string
+          invoice_number?: string
+          invoice_type?: Database["public"]["Enums"]["purchase_invoice_type"]
+          notes?: string | null
+          owner_id?: string
+          payment_type?: Database["public"]["Enums"]["payment_type"]
+          subtotal?: number
+          supplier_id?: string
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_invoices_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_payment_audit: {
+        Row: {
+          action: string
+          actor_id: string | null
+          amount: number
+          created_at: string
+          id: string
+          invoice_id: string
+          method: string | null
+          notes: string | null
+          owner_id: string
+          payment_date: string | null
+          payment_id: string | null
+          reference: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          amount: number
+          created_at?: string
+          id?: string
+          invoice_id: string
+          method?: string | null
+          notes?: string | null
+          owner_id: string
+          payment_date?: string | null
+          payment_id?: string | null
+          reference?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          amount?: number
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          method?: string | null
+          notes?: string | null
+          owner_id?: string
+          payment_date?: string | null
+          payment_id?: string | null
+          reference?: string | null
+        }
+        Relationships: []
+      }
+      purchase_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          invoice_id: string
+          method: string | null
+          notes: string | null
+          owner_id: string
+          payment_date: string
+          reference: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          invoice_id: string
+          method?: string | null
+          notes?: string | null
+          owner_id: string
+          payment_date?: string
+          reference?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          method?: string | null
+          notes?: string | null
+          owner_id?: string
+          payment_date?: string
+          reference?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          balance: number
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          owner_id: string
+          phone: string | null
+          tax_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          owner_id: string
+          phone?: string | null
+          tax_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          owner_id?: string
+          phone?: string | null
+          tax_number?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -298,12 +532,33 @@ export type Database = {
         }
         Returns: undefined
       }
+      apply_purchase_invoice_delta: {
+        Args: {
+          p_sign: number
+          p_supplier: string
+          p_total: number
+          p_type: Database["public"]["Enums"]["purchase_invoice_type"]
+        }
+        Returns: undefined
+      }
       generate_invoice_number: {
         Args: { p_type: Database["public"]["Enums"]["invoice_type"] }
         Returns: string
       }
+      generate_purchase_invoice_number: {
+        Args: { p_type: Database["public"]["Enums"]["purchase_invoice_type"] }
+        Returns: string
+      }
       invoice_paid_total: { Args: { p_invoice: string }; Returns: number }
+      purchase_invoice_paid_total: {
+        Args: { p_invoice: string }
+        Returns: number
+      }
       recalc_invoice_totals: {
+        Args: { p_invoice_id: string }
+        Returns: undefined
+      }
+      recalc_purchase_invoice_totals: {
         Args: { p_invoice_id: string }
         Returns: undefined
       }
@@ -311,6 +566,7 @@ export type Database = {
     Enums: {
       invoice_type: "sales" | "credit_note" | "quotation"
       payment_type: "cash" | "deferred_cash" | "credit"
+      purchase_invoice_type: "purchase" | "debit_note"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -440,6 +696,7 @@ export const Constants = {
     Enums: {
       invoice_type: ["sales", "credit_note", "quotation"],
       payment_type: ["cash", "deferred_cash", "credit"],
+      purchase_invoice_type: ["purchase", "debit_note"],
     },
   },
 } as const

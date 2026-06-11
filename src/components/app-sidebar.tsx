@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { LayoutDashboard, Users, FileText, Package, Plus, LogOut, Pill } from "lucide-react";
+import { LayoutDashboard, Users, FileText, Package, Plus, LogOut, Pill, Truck, ShoppingCart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Sidebar,
@@ -21,6 +21,8 @@ const mainItems = [
   { title: "لوحة التحكم", url: "/dashboard", icon: LayoutDashboard },
   { title: "العملاء", url: "/customers", icon: Users },
   { title: "الفواتير", url: "/invoices", icon: FileText },
+  { title: "الموردون", url: "/suppliers", icon: Truck },
+  { title: "فواتير الشراء", url: "/purchases", icon: ShoppingCart },
   { title: "المخزون", url: "/inventory", icon: Package },
 ] as const;
 
