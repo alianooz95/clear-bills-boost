@@ -692,7 +692,7 @@ export type Database = {
     Enums: {
       invoice_type: "sales" | "credit_note" | "quotation"
       payment_type: "cash" | "deferred_cash" | "credit"
-      product_category: "owned" | "negotiation" | "market"
+      product_category: "owned" | "negotiation" | "market" | "import"
       purchase_invoice_type: "purchase" | "debit_note"
     }
     CompositeTypes: {
@@ -823,7 +823,7 @@ export const Constants = {
     Enums: {
       invoice_type: ["sales", "credit_note", "quotation"],
       payment_type: ["cash", "deferred_cash", "credit"],
-      product_category: ["owned", "negotiation", "market"],
+      product_category: ["owned", "negotiation", "market", "import"],
       purchase_invoice_type: ["purchase", "debit_note"],
     },
   },
