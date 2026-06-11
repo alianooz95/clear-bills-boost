@@ -143,7 +143,7 @@ function InventoryPage() {
                     <span>الكمية: <span className="font-mono font-semibold">{it.quantity}</span> {it.unit}</span>
                     {Number(it.bonus_quantity) > 0 && <span className="text-emerald-700">بونص: <span className="font-mono">{it.bonus_quantity}</span></span>}
                     <span>تكلفة: <span className="font-mono">{formatMoney(it.cost_price)}</span></span>
-                    {Number(it.public_price) > 0 && <span>جمهور: <span className="font-mono">{formatMoney(it.public_price)}</span></span>}
+                    <span>سعر الجمهور: <span className="font-mono font-semibold text-primary">{formatMoney(it.public_price || 0)}</span></span>
                   </div>
                 </div>
                 <div className="text-end shrink-0">
