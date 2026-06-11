@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      customer_receipts: {
+        Row: {
+          amount: number
+          created_at: string
+          customer_id: string
+          id: string
+          method: string | null
+          notes: string | null
+          owner_id: string
+          receipt_date: string
+          receipt_number: string
+          reference: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          customer_id: string
+          id?: string
+          method?: string | null
+          notes?: string | null
+          owner_id: string
+          receipt_date?: string
+          receipt_number: string
+          reference?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          customer_id?: string
+          id?: string
+          method?: string | null
+          notes?: string | null
+          owner_id?: string
+          receipt_date?: string
+          receipt_number?: string
+          reference?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_receipts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           balance: number
@@ -541,6 +591,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      generate_customer_receipt_number: { Args: never; Returns: string }
       generate_invoice_number: {
         Args: { p_type: Database["public"]["Enums"]["invoice_type"] }
         Returns: string
