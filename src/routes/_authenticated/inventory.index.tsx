@@ -136,7 +136,7 @@ function InventoryPage() {
                   <div className="text-xs text-muted-foreground flex flex-wrap gap-x-3 gap-y-1">
                     {it.suppliers?.name && <span>المورد: {it.suppliers.name}</span>}
                     {it.country && <span>المنشأ: {it.country}</span>}
-                    {it.expiry_date && <span>انتهاء: <span dir="ltr">{it.expiry_date}</span></span>}
+                    {it.expiry_date && <span>انتهاء: <span dir="ltr">{it.expiry_date.slice(0, 7)}</span></span>}
                     {it.batch_number && <span>باتش: <span dir="ltr">{it.batch_number}</span></span>}
                   </div>
                   <div className="text-xs flex flex-wrap gap-x-3">
