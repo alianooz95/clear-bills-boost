@@ -10,6 +10,7 @@ import {
   convertToOwned,
 } from "@/lib/inventory/inventory.functions";
 import { listSuppliers } from "@/lib/suppliers/suppliers.functions";
+import { getCompanySettings, upsertCompanySettings } from "@/lib/company/company.functions";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -386,18 +387,53 @@ const CAT_LABEL: Record<Category, string> = {
   market: "أسعار السوق المرجعية",
 };
 
-type CompanyInfo = { name: string; address: string; phone: string; logo: string };
-const COMPANY_KEY = "oplus.company.info";
-const DEFAULT_COMPANY: CompanyInfo = { name: "Oplus Pharma", address: "", phone: "", logo: "" };
-function loadCompany(): CompanyInfo {
-  if (typeof window === "undefined") return DEFAULT_COMPANY;
-  try {
-    const raw = localStorage.getItem(COMPANY_KEY);
-    return raw ? { ...DEFAULT_COMPANY, ...JSON.parse(raw) } : DEFAULT_COMPANY;
-  } catch { return DEFAULT_COMPANY; }
-}
-function saveCompany(c: CompanyInfo) {
-  try { localStorage.setItem(COMPANY_KEY, JSON.stringify(c)); } catch {}
+type CompanyInfo = { name: string; address: string; phone: string; logo_data_url: string };
+const DEFAULT_COMPANY: CompanyInfo = { name: "Oplus Pharma", address: "", phone: "", logo_data_url: "" };
+
+// PDF theme tokens (shared between live preview and exported PDF)
+const PDF_THEME = {
+  brand: "#0f766e",
+  brandTo: "#14b8a6",
+  brandSoft: "#ecfdf5",
+  border: "#e5e7eb",
+  text: "#111827",
+  muted: "#6b7280",
+};
+
+// Embed Tajawal Arabic font as a data URL so html2canvas always renders Arabic
+// correctly — even on first run before the browser has cached Google Fonts.
+let _embeddedFontCss: string | null = null;
+let _embeddedFontPromise: Promise<string> | null = null;
+async function getEmbeddedArabicFontCss(): Promise<string> {
+  if (_embeddedFontCss !== null) return _embeddedFontCss;
+  if (_embeddedFontPromise) return _embeddedFontPromise;
+  _embeddedFontPromise = (async () => {
+    try {
+      const FONTS: { weight: number; url: string }[] = [
+        { weight: 400, url: "https://fonts.gstatic.com/s/tajawal/v9/Iurf6YBj_oCad4k1l_6gLrZjiLlJ-G0.woff2" },
+        { weight: 700, url: "https://fonts.gstatic.com/s/tajawal/v9/Iurf6YBj_oCad4k1l_6gLrZjiLlJ_G0.woff2" },
+      ];
+      const faces = await Promise.all(FONTS.map(async (f) => {
+        const res = await fetch(f.url);
+        const buf = await res.arrayBuffer();
+        let bin = "";
+        const bytes = new Uint8Array(buf);
+        for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+        const b64 = btoa(bin);
+        return `@font-face{font-family:'TajawalPDF';font-style:normal;font-weight:${f.weight};font-display:swap;src:url(data:font/woff2;base64,${b64}) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+08A0-08FF,U+FB50-FDFF,U+FE70-FEFF,U+0020-007E;}`;
+      }));
+      _embeddedFontCss = faces.join("\n");
+      // Register with document.fonts so html2canvas can resolve glyphs
+      try {
+        await Promise.all(FONTS.map((f) => document.fonts.load(`${f.weight} 16px TajawalPDF`)));
+      } catch {}
+      return _embeddedFontCss;
+    } catch {
+      _embeddedFontCss = "";
+      return "";
+    }
+  })();
+  return _embeddedFontPromise;
 }
 
 function PdfExportDialog({
@@ -419,24 +455,45 @@ function PdfExportDialog({
   const [busy, setBusy] = useState(false);
   const [company, setCompany] = useState<CompanyInfo>(DEFAULT_COMPANY);
   const [showSettings, setShowSettings] = useState(false);
+  const [savingCompany, setSavingCompany] = useState(false);
 
-  useStateReset(open, () => {
-    setCompany(loadCompany());
+  const getCompanyFn = useServerFn(getCompanySettings);
+  const upsertCompanyFn = useServerFn(upsertCompanySettings);
+  const { data: serverCompany } = useQuery({
+    queryKey: ["company-settings"],
+    queryFn: () => getCompanyFn(),
+    staleTime: 60_000,
   });
+  useEffect(() => {
+    if (serverCompany) setCompany({ ...DEFAULT_COMPANY, ...serverCompany });
+  }, [serverCompany]);
 
+  // Preload the embedded Arabic font when the dialog opens
+  useEffect(() => { if (open) void getEmbeddedArabicFontCss(); }, [open]);
+
+  // Debounced auto-save to the server
+  const saveTimer = (globalThis as any)._companySaveTimer as { id: number | null } | undefined;
   const updateCompany = (patch: Partial<CompanyInfo>) => {
     setCompany((c) => {
       const next = { ...c, ...patch };
-      saveCompany(next);
+      const t = (globalThis as any)._companySaveTimer ||= { id: null as number | null };
+      if (t.id) window.clearTimeout(t.id);
+      t.id = window.setTimeout(() => {
+        setSavingCompany(true);
+        upsertCompanyFn({ data: next })
+          .catch((e: Error) => toast.error("تعذّر حفظ بيانات الشركة: " + e.message))
+          .finally(() => setSavingCompany(false));
+      }, 600);
       return next;
     });
   };
+  void saveTimer;
 
   const onLogoFile = (file: File | null) => {
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) { toast.error("حجم الشعار أكبر من 2MB"); return; }
+    if (file.size > 1.5 * 1024 * 1024) { toast.error("حجم الشعار أكبر من 1.5MB"); return; }
     const reader = new FileReader();
-    reader.onload = () => updateCompany({ logo: String(reader.result || "") });
+    reader.onload = () => updateCompany({ logo_data_url: String(reader.result || "") });
     reader.readAsDataURL(file);
   };
 
