@@ -567,15 +567,18 @@ function PdfExportDialog({
       ].filter(Boolean).join("");
 
       const todayLong = new Date().toLocaleDateString("ar-EG", { year: "numeric", month: "long", day: "numeric" });
+      // Pre-load embedded Arabic font (data URL) so Arabic always renders correctly
+      const fontCss = await getEmbeddedArabicFontCss();
       const container = document.createElement("div");
       container.lang = "ar";
       container.dir = "rtl";
-      container.style.cssText = `position:fixed;left:-10000px;top:0;width:900px;background:#ffffff;color:${TEXT};direction:rtl;font-family:'Tajawal','Cairo','Segoe UI',Arial,sans-serif;`;
+      container.style.cssText = `position:fixed;left:-10000px;top:0;width:900px;background:#ffffff;color:${TEXT};direction:rtl;font-family:'TajawalPDF','Tajawal','Cairo','Segoe UI',Arial,sans-serif;`;
       const logoHtml = company.logo_data_url
         ? `<img src="${company.logo_data_url}" crossorigin="anonymous" style="height:56px;width:auto;max-width:140px;object-fit:contain;background:#fff;padding:6px;border-radius:10px;" />`
         : `<div style="height:56px;width:56px;border-radius:12px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:22px;">${esc((company.name || "O").trim().charAt(0))}</div>`;
       const addressLine = company.address ? `<div style="font-size:11px;opacity:.85;margin-top:4px;">${esc(company.address)}</div>` : "";
       container.innerHTML = `
+        <style>${fontCss}</style>
         <div style="background:linear-gradient(135deg,${BRAND} 0%,#14b8a6 100%);padding:28px 32px;color:#fff;position:relative;overflow:hidden;">
           <div style="position:absolute;inset:0;background:radial-gradient(circle at 90% 20%,rgba(255,255,255,.18),transparent 50%);"></div>
           <div style="display:flex;justify-content:space-between;align-items:center;position:relative;gap:16px;">
@@ -619,14 +622,12 @@ function PdfExportDialog({
       document.body.appendChild(container);
 
       try {
-        // Ensure Arabic webfont is ready before rasterizing — otherwise html2canvas
-        // renders glyphs from a fallback font and Arabic looks broken.
+        // Ensure the embedded font is actually registered before rasterizing.
         if (document.fonts) {
           try {
             await Promise.all([
-              document.fonts.load("700 22px Tajawal"),
-              document.fonts.load("500 11px Tajawal"),
-              document.fonts.load("400 11px Tajawal"),
+              document.fonts.load("700 22px TajawalPDF"),
+              document.fonts.load("400 12px TajawalPDF"),
             ]);
             await document.fonts.ready;
           } catch {}
