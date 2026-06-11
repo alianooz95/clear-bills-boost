@@ -484,8 +484,14 @@ async function getEmbeddedArabicFontCss(): Promise<string> {
   _embeddedFontPromise = (async () => {
     try {
       const FONTS: { weight: number; url: string }[] = [
-        { weight: 400, url: "https://fonts.gstatic.com/s/tajawal/v9/Iurf6YBj_oCad4k1l_6gLrZjiLlJ-G0.woff2" },
-        { weight: 700, url: "https://fonts.gstatic.com/s/tajawal/v9/Iurf6YBj_oCad4k1l_6gLrZjiLlJ_G0.woff2" },
+        // Fontsource ships per-subset woff2 files. The Arabic subset is what we
+        // need — Google Fonts' default gstatic URLs only contain Latin glyphs,
+        // which is why Arabic letters render broken (disconnected / wrong shape)
+        // inside html2canvas when the browser hasn't already cached the Arabic
+        // subset from a previous page load.
+        { weight: 400, url: "https://cdn.jsdelivr.net/npm/@fontsource/tajawal@5.0.5/files/tajawal-arabic-400-normal.woff2" },
+        { weight: 500, url: "https://cdn.jsdelivr.net/npm/@fontsource/tajawal@5.0.5/files/tajawal-arabic-500-normal.woff2" },
+        { weight: 700, url: "https://cdn.jsdelivr.net/npm/@fontsource/tajawal@5.0.5/files/tajawal-arabic-700-normal.woff2" },
       ];
       const faces = await Promise.all(FONTS.map(async (f) => {
         const res = await fetch(f.url);
