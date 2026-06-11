@@ -44,6 +44,7 @@ type Item = {
   bonus_quantity: number;
   supplier_id: string | null;
   suppliers?: { name: string } | null;
+  supplier_name: string | null;
   pharma_form: string | null;
   country: string | null;
   category: Category;
@@ -216,6 +217,7 @@ function ItemDialog({
   const [bonus, setBonus] = useState("0");
   const [country, setCountry] = useState("");
   const [supplierId, setSupplierId] = useState<string>("");
+  const [supplierText, setSupplierText] = useState<string>("");
   const [category, setCategory] = useState<Category>("owned");
 
   const supplierFn = useServerFn(listSuppliers);
@@ -236,6 +238,7 @@ function ItemDialog({
     setBonus(String(editing?.bonus_quantity ?? "0"));
     setCountry(editing?.country ?? "");
     setSupplierId(editing?.supplier_id ?? "");
+    setSupplierText(editing?.suppliers?.name ?? editing?.supplier_name ?? "");
     setCategory(editing?.category ?? defaultCategory);
   });
 
@@ -244,6 +247,13 @@ function ItemDialog({
 
   const save = useMutation({
     mutationFn: async () => {
+      // Match typed text against existing suppliers (case-insensitive trim)
+      const typed = supplierText.trim();
+      const matched = suppliers.find(
+        (s: any) => s.name?.trim().toLowerCase() === typed.toLowerCase(),
+      );
+      const resolvedSupplierId = matched ? matched.id : supplierId || null;
+      const resolvedSupplierName = !matched && typed ? typed : null;
       const payload = {
         name: name.trim(),
         scientific_name: scientific.trim() || null,
@@ -255,7 +265,8 @@ function ItemDialog({
         public_price: Number(publicPrice) || 0,
         quantity: Number(qty) || 0,
         bonus_quantity: Number(bonus) || 0,
-        supplier_id: supplierId || null,
+        supplier_id: resolvedSupplierId,
+        supplier_name: resolvedSupplierName,
         pharma_form: pharmaForm.trim() || null,
         country: country.trim() || null,
         category,
@@ -307,12 +318,22 @@ function ItemDialog({
             </div>
             <div className="space-y-1.5">
               <Label>المورد</Label>
-              <Select value={supplierId} onValueChange={setSupplierId}>
-                <SelectTrigger><SelectValue placeholder="اختر المورد" /></SelectTrigger>
-                <SelectContent>
-                  {suppliers.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <Input
+                list="supplier-options"
+                value={supplierText}
+                onChange={(e) => {
+                  setSupplierText(e.target.value);
+                  // If the typed value matches an existing supplier, link the id
+                  const match = suppliers.find(
+                    (s: any) => s.name?.trim().toLowerCase() === e.target.value.trim().toLowerCase(),
+                  );
+                  setSupplierId(match ? match.id : "");
+                }}
+                placeholder="اكتب اسم المورد أو اختر من القائمة"
+              />
+              <datalist id="supplier-options">
+                {suppliers.map((s: any) => <option key={s.id} value={s.name} />)}
+              </datalist>
             </div>
             <div className="space-y-1.5">
               <Label>الوحدة</Label>
