@@ -615,11 +615,11 @@ function PdfExportDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>تصدير PDF — {CAT_LABEL[category]}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-2">
+        <div className="space-y-3">
           <p className="text-xs text-muted-foreground">اختر الأعمدة التي ستظهر في الملف:</p>
           <div className="grid grid-cols-2 gap-2">
             {PDF_FIELDS.map((f) => (
@@ -628,6 +628,63 @@ function PdfExportDialog({
                 {f.label}
               </Label>
             ))}
+          </div>
+          <div className="border-t pt-3 space-y-2">
+            <button
+              type="button"
+              className="text-xs font-semibold text-primary hover:underline"
+              onClick={() => setShowSettings((s) => !s)}
+            >
+              {showSettings ? "إخفاء" : "إعدادات الشركة (يظهر في الهيدر والفوتر)"}
+            </button>
+            {showSettings && (
+              <div className="space-y-2 rounded-md border bg-muted/30 p-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">اسم الجهة</Label>
+                  <Input
+                    value={company.name}
+                    onChange={(e) => updateCompany({ name: e.target.value })}
+                    placeholder="Oplus Pharma"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">العنوان</Label>
+                  <Input
+                    value={company.address}
+                    onChange={(e) => updateCompany({ address: e.target.value })}
+                    placeholder="القاهرة — مصر"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">الهاتف</Label>
+                  <Input
+                    dir="ltr"
+                    value={company.phone}
+                    onChange={(e) => updateCompany({ phone: e.target.value })}
+                    placeholder="+20 100 000 0000"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">شعار الشركة (PNG/JPG، حد أقصى 2MB)</Label>
+                  <div className="flex items-center gap-2">
+                    {company.logo && (
+                      <img src={company.logo} alt="logo" className="h-10 w-10 rounded border bg-white object-contain" />
+                    )}
+                    <Input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                      onChange={(e) => onLogoFile(e.target.files?.[0] ?? null)}
+                      className="text-xs"
+                    />
+                    {company.logo && (
+                      <Button type="button" variant="ghost" size="sm" onClick={() => updateCompany({ logo: "" })}>
+                        حذف
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
         <DialogFooter>
