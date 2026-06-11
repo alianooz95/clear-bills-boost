@@ -427,14 +427,20 @@ function PdfExportDialog({
     try {
       const today = new Date().toISOString().slice(0, 10);
       const esc = (s: any) => String(s ?? "—").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]!));
+      const BRAND = "#0f766e"; // teal-700
+      const BRAND_SOFT = "#ecfdf5";
+      const BORDER = "#e5e7eb";
+      const TEXT = "#111827";
+      const MUTED = "#6b7280";
       const th = (label: string, end = false) =>
-        `<th style="border:1px solid #000;padding:4px 6px;text-align:${end ? "end" : "start"};background:#f3f4f6;">${label}</th>`;
-      const td = (val: string, opts: { end?: boolean; bold?: boolean; ltr?: boolean } = {}) =>
-        `<td style="border:1px solid #000;padding:4px 6px;text-align:${opts.end ? "end" : "start"};${opts.bold ? "font-weight:700;" : ""}${opts.ltr ? "direction:ltr;" : ""}font-family:${opts.ltr ? "monospace" : "inherit"};">${val}</td>`;
+        `<th style="padding:10px 12px;text-align:${end ? "end" : "start"};background:${BRAND};color:#fff;font-weight:600;font-size:11px;letter-spacing:.02em;border:none;">${label}</th>`;
+      const td = (val: string, opts: { end?: boolean; bold?: boolean; ltr?: boolean; accent?: boolean } = {}) =>
+        `<td style="padding:9px 12px;text-align:${opts.end ? "end" : "start"};${opts.bold ? "font-weight:700;" : "font-weight:500;"}${opts.ltr ? "direction:ltr;" : ""}font-family:${opts.ltr ? "'SF Mono',Menlo,monospace" : "inherit"};color:${opts.accent ? BRAND : TEXT};border-bottom:1px solid ${BORDER};font-size:11px;">${val}</td>`;
 
       const rows = items.map((it, idx) => {
+        const zebra = idx % 2 === 1 ? `background:#fafafa;` : "";
         const cells = [
-          td(String(idx + 1)),
+          td(`<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;background:${BRAND_SOFT};color:${BRAND};font-weight:700;font-size:10px;">${idx + 1}</span>`),
           td(esc(it.name), { bold: true }),
           fields.scientific_name && td(esc(it.scientific_name)),
           fields.pharma_form && td(esc(it.pharma_form)),
@@ -443,12 +449,12 @@ function PdfExportDialog({
           fields.quantity && td(`${it.quantity} ${esc(it.unit || "")}`, { end: true, ltr: true }),
           fields.bonus_quantity && td(String(it.bonus_quantity || 0), { end: true, ltr: true }),
           fields.cost_price && td(formatMoney(it.cost_price), { end: true, ltr: true }),
-          fields.unit_price && td(formatMoney(it.unit_price), { end: true, ltr: true, bold: true }),
+          fields.unit_price && td(formatMoney(it.unit_price), { end: true, ltr: true, bold: true, accent: true }),
           fields.public_price && td(formatMoney(it.public_price), { end: true, ltr: true }),
           fields.batch_number && td(esc(it.batch_number), { ltr: true }),
           fields.expiry_date && td(esc(it.expiry_date ? it.expiry_date.slice(0, 7) : null), { ltr: true }),
         ].filter(Boolean).join("");
-        return `<tr>${cells}</tr>`;
+        return `<tr style="${zebra}">${cells}</tr>`;
       }).join("");
 
       const headers = [
@@ -467,18 +473,37 @@ function PdfExportDialog({
         fields.expiry_date && th("الانتهاء"),
       ].filter(Boolean).join("");
 
+      const todayLong = new Date().toLocaleDateString("ar-EG", { year: "numeric", month: "long", day: "numeric" });
       const container = document.createElement("div");
-      container.style.cssText = "position:fixed;left:-10000px;top:0;width:900px;background:#ffffff;color:#000000;padding:24px;direction:rtl;font-family:'Cairo','Tajawal',Arial,sans-serif;";
+      container.style.cssText = `position:fixed;left:-10000px;top:0;width:900px;background:#ffffff;color:${TEXT};direction:rtl;font-family:'Cairo','Tajawal','Segoe UI',Arial,sans-serif;`;
       container.innerHTML = `
-        <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:12px;margin-bottom:16px;">
-          <h2 style="font-size:20px;font-weight:700;margin:0;">Oplus Pharma</h2>
-          <p style="font-size:14px;margin:4px 0 0;">${CAT_LABEL[category]}</p>
-          <p style="font-size:11px;color:#555;margin:4px 0 0;">تاريخ الإصدار: <span dir="ltr" style="font-family:monospace;">${today}</span></p>
+        <div style="background:linear-gradient(135deg,${BRAND} 0%,#14b8a6 100%);padding:28px 32px;color:#fff;position:relative;overflow:hidden;">
+          <div style="position:absolute;inset:0;background:radial-gradient(circle at 90% 20%,rgba(255,255,255,.18),transparent 50%);"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;position:relative;">
+            <div>
+              <div style="font-size:11px;letter-spacing:.3em;opacity:.85;margin-bottom:6px;">OPLUS PHARMA</div>
+              <h2 style="font-size:24px;font-weight:700;margin:0;letter-spacing:-.01em;">${CAT_LABEL[category]}</h2>
+              <p style="font-size:12px;margin:6px 0 0;opacity:.9;">قائمة المنتجات الدوائية المعتمدة</p>
+            </div>
+            <div style="text-align:end;font-size:11px;opacity:.95;">
+              <div style="opacity:.75;margin-bottom:4px;">تاريخ الإصدار</div>
+              <div style="font-weight:600;font-size:13px;">${todayLong}</div>
+              <div style="margin-top:8px;display:inline-block;padding:4px 10px;background:rgba(255,255,255,.18);border-radius:999px;font-size:11px;font-weight:600;">${items.length} صنف</div>
+            </div>
+          </div>
         </div>
-        ${items.length === 0
-          ? `<p style="text-align:center;padding:32px;color:#666;">لا توجد منتجات.</p>`
-          : `<table style="width:100%;border-collapse:collapse;font-size:11px;"><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table>`}
-        <p style="font-size:10px;color:#666;text-align:center;margin-top:24px;">الأسعار قابلة للتغيير دون إشعار مسبق.</p>
+        <div style="padding:24px 32px 32px;">
+          ${items.length === 0
+            ? `<p style="text-align:center;padding:48px;color:${MUTED};font-size:13px;">لا توجد منتجات في هذه القائمة.</p>`
+            : `<table style="width:100%;border-collapse:collapse;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06);">
+                <thead><tr>${headers}</tr></thead>
+                <tbody>${rows}</tbody>
+              </table>`}
+          <div style="margin-top:24px;padding-top:16px;border-top:1px solid ${BORDER};display:flex;justify-content:space-between;align-items:center;font-size:10px;color:${MUTED};">
+            <span>الأسعار قابلة للتغيير دون إشعار مسبق.</span>
+            <span>© Oplus Pharma · ${new Date().getFullYear()}</span>
+          </div>
+        </div>
       `;
       document.body.appendChild(container);
 
