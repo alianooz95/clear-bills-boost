@@ -8,7 +8,7 @@ import { formatMoney } from "@/lib/invoices/invoice-math";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Printer } from "lucide-react";
+import { Printer, FileDown } from "lucide-react";
 
 const searchSchema = z.object({
   category: z.enum(["owned", "negotiation", "market"]).default("owned"),
@@ -64,12 +64,35 @@ function PrintCatalog() {
 
   const today = new Date().toISOString().slice(0, 10);
 
+  const exportPdf = async () => {
+    const el = document.querySelector(".catalog-print") as HTMLElement | null;
+    if (!el) return;
+    const html2pdf = (await import("html2pdf.js")).default;
+    await html2pdf()
+      .from(el)
+      .set({
+        margin: 10,
+        filename: `${CAT_LABEL[category]}-${today}.pdf`,
+        image: { type: "jpeg", quality: 0.95 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      })
+      .save();
+  };
+
   return (
     <div className="bg-white text-black">
       <div className="print:hidden p-4 border-b space-y-3 max-w-5xl mx-auto">
         <div className="flex justify-between items-center">
           <h1 className="text-lg font-bold">{CAT_LABEL[category]}</h1>
-          <Button onClick={() => window.print()}><Printer className="h-4 w-4 ms-1" /> طباعة</Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={exportPdf}>
+              <FileDown className="h-4 w-4 ms-1" /> تصدير PDF
+            </Button>
+            <Button onClick={() => window.print()}>
+              <Printer className="h-4 w-4 ms-1" /> طباعة
+            </Button>
+          </div>
         </div>
         <div>
           <p className="text-xs font-medium mb-2">اختر الأعمدة المراد طباعتها:</p>
