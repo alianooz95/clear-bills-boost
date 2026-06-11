@@ -678,6 +678,7 @@ function PdfExportDialog({
           <DialogTitle>تصدير PDF — {CAT_LABEL[category]}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
+          <PdfHeaderFooterPreview category={category} count={items.length} company={company} />
           <p className="text-xs text-muted-foreground">اختر الأعمدة التي ستظهر في الملف:</p>
           <div className="grid grid-cols-2 gap-2">
             {PDF_FIELDS.map((f) => (
@@ -694,6 +695,7 @@ function PdfExportDialog({
               onClick={() => setShowSettings((s) => !s)}
             >
               {showSettings ? "إخفاء" : "إعدادات الشركة (يظهر في الهيدر والفوتر)"}
+              {savingCompany && <span className="ms-2 text-muted-foreground">جاري الحفظ…</span>}
             </button>
             {showSettings && (
               <div className="space-y-2 rounded-md border bg-muted/30 p-3">
