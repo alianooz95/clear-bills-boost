@@ -5,10 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { useServerFn } from "@tanstack/react-start";
-import { ensureDemoUser } from "@/lib/auth/demo.functions";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "تسجيل الدخول — Oplus Pharma" }] }),
@@ -20,7 +17,6 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const ensureDemo = useServerFn(ensureDemoUser);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -37,36 +33,6 @@ function AuthPage() {
     navigate({ to: "/customers" });
   };
 
-  const signUp = async () => {
-    setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: window.location.origin },
-    });
-    setLoading(false);
-    if (error) return toast.error(error.message);
-    toast.success("تم إنشاء الحساب — راجع بريدك لتأكيد البريد الإلكتروني.");
-  };
-
-  const quickDemoLogin = async () => {
-    setLoading(true);
-    try {
-      const creds = await ensureDemo();
-      const { error } = await supabase.auth.signInWithPassword({
-        email: creds.email,
-        password: creds.password,
-      });
-      if (error) throw error;
-      toast.success("مرحباً بك في الحساب التجريبي");
-      navigate({ to: "/customers" });
-    } catch (e: any) {
-      toast.error(e?.message ?? "تعذر الدخول التجريبي");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen relative flex items-center justify-center p-4 bg-gradient-soft overflow-hidden">
       <div className="absolute inset-0 -z-10 pointer-events-none">
@@ -79,43 +45,22 @@ function AuthPage() {
             <span className="font-display text-xl font-bold text-primary-foreground">O+</span>
           </div>
           <CardTitle className="font-display text-2xl">Oplus Pharma</CardTitle>
-          <CardDescription>سجّل الدخول أو أنشئ حسابًا للمتابعة</CardDescription>
+          <CardDescription>سجّل الدخول للمتابعة</CardDescription>
         </CardHeader>
         <CardContent>
-          <Button
-            variant="secondary"
-            className="w-full mb-4"
-            disabled={loading}
-            onClick={quickDemoLogin}
-          >
-            🚀 {loading ? "جارٍ التحضير..." : "دخول سريع بحساب تجريبي"}
-          </Button>
-          <Tabs defaultValue="signin">
-            <TabsList className="grid grid-cols-2 w-full">
-              <TabsTrigger value="signin">تسجيل الدخول</TabsTrigger>
-              <TabsTrigger value="signup">حساب جديد</TabsTrigger>
-            </TabsList>
-            <div className="space-y-3 mt-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="email">البريد الإلكتروني</Label>
-                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} dir="ltr" />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="password">كلمة المرور</Label>
-                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} dir="ltr" />
-              </div>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="email">البريد الإلكتروني</Label>
+              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} dir="ltr" autoComplete="username" />
             </div>
-            <TabsContent value="signin" className="mt-4">
-              <Button className="w-full" disabled={loading} onClick={signIn}>
-                {loading ? "..." : "دخول"}
-              </Button>
-            </TabsContent>
-            <TabsContent value="signup" className="mt-4">
-              <Button className="w-full" disabled={loading} onClick={signUp}>
-                {loading ? "..." : "إنشاء حساب"}
-              </Button>
-            </TabsContent>
-          </Tabs>
+            <div className="space-y-1.5">
+              <Label htmlFor="password">كلمة المرور</Label>
+              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} dir="ltr" autoComplete="current-password" onKeyDown={(e) => { if (e.key === "Enter") signIn(); }} />
+            </div>
+            <Button className="w-full" disabled={loading} onClick={signIn}>
+              {loading ? "..." : "دخول"}
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
