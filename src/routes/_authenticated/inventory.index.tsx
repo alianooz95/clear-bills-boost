@@ -344,3 +344,90 @@ function useStateReset(open: boolean, fn: () => void) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 }
+
+function ConvertDialog({
+  item, onClose, onDone,
+}: { item: Item | null; onClose: () => void; onDone: () => void }) {
+  const [price, setPrice] = useState("0");
+  const [cost, setCost] = useState("0");
+  const [qty, setQty] = useState("0");
+  const [bonus, setBonus] = useState("0");
+  const [batch, setBatch] = useState("");
+  const [expiry, setExpiry] = useState("");
+
+  useStateReset(!!item, () => {
+    setPrice(String(item?.unit_price ?? "0"));
+    setCost(String(item?.cost_price ?? "0"));
+    setQty(String(item?.quantity ?? "0"));
+    setBonus(String(item?.bonus_quantity ?? "0"));
+    setBatch(item?.batch_number ?? "");
+    setExpiry(item?.expiry_date ?? "");
+  });
+
+  const convertFn = useServerFn(convertToOwned);
+  const run = useMutation({
+    mutationFn: async () => {
+      if (!item) return;
+      return convertFn({
+        data: {
+          id: item.id,
+          unit_price: Number(price) || 0,
+          cost_price: Number(cost) || 0,
+          quantity: Number(qty) || 0,
+          bonus_quantity: Number(bonus) || 0,
+          batch_number: batch.trim() || null,
+          expiry_date: expiry || null,
+          supplier_id: item.supplier_id,
+          pharma_form: item.pharma_form,
+          country: item.country,
+          unit: item.unit,
+        },
+      });
+    },
+    onSuccess: () => { toast.success("تم التحويل إلى منتجاتي"); onDone(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <Dialog open={!!item} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>تحويل إلى منتجاتي — {item?.name}</DialogTitle>
+        </DialogHeader>
+        <p className="text-xs text-muted-foreground">راجع وعدّل البيانات قبل النقل إلى المخزون.</p>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label>سعر البيع</Label>
+            <Input className="font-mono" dir="ltr" type="number" min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>سعر التكلفة</Label>
+            <Input className="font-mono" dir="ltr" type="number" min="0" step="0.01" value={cost} onChange={(e) => setCost(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>الكمية</Label>
+            <Input className="font-mono" dir="ltr" type="number" min="0" step="0.01" value={qty} onChange={(e) => setQty(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>البونص</Label>
+            <Input className="font-mono" dir="ltr" type="number" min="0" step="0.01" value={bonus} onChange={(e) => setBonus(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>رقم الباتش</Label>
+            <Input dir="ltr" value={batch} onChange={(e) => setBatch(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>تاريخ الانتهاء</Label>
+            <Input dir="ltr" type="date" value={expiry} onChange={(e) => setExpiry(e.target.value)} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>إلغاء</Button>
+          <Button onClick={() => run.mutate()} disabled={run.isPending}>
+            {run.isPending ? "جاري التحويل…" : "تحويل إلى منتجاتي"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
