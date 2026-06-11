@@ -12,4 +12,24 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  vite: {
+    optimizeDeps: {
+      include: [
+        "lucide-react",
+        "class-variance-authority",
+        "@radix-ui/react-slot",
+        "@radix-ui/react-tooltip",
+        "@radix-ui/react-separator",
+        "@radix-ui/react-label",
+        "@radix-ui/react-tabs",
+        "@radix-ui/react-select",
+        "@radix-ui/react-checkbox",
+        "@radix-ui/react-dialog",
+        "tailwind-merge",
+        "clsx",
+        "html2canvas-pro",
+        "jspdf",
+      ],
+    },
+  },
 });
