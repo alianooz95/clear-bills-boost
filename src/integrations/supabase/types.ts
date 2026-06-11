@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      company_settings: {
+        Row: {
+          address: string
+          created_at: string
+          logo_data_url: string
+          name: string
+          phone: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string
+          created_at?: string
+          logo_data_url?: string
+          name?: string
+          phone?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          logo_data_url?: string
+          name?: string
+          phone?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       customer_receipts: {
         Row: {
           amount: number
