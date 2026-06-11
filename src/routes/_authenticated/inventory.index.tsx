@@ -7,6 +7,7 @@ import {
   createInventoryItem,
   updateInventoryItem,
   deleteInventoryItem,
+  convertToOwned,
 } from "@/lib/inventory/inventory.functions";
 import { listSuppliers } from "@/lib/suppliers/suppliers.functions";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,7 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Pencil, Trash2, Package, Printer } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Package, Printer, ArrowRightLeft } from "lucide-react";
 import { formatMoney } from "@/lib/invoices/invoice-math";
 import { toast } from "sonner";
 
@@ -57,6 +58,7 @@ function InventoryPage() {
   const [category, setCategory] = useState<Category>("owned");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Item | null>(null);
+  const [converting, setConverting] = useState<Item | null>(null);
 
   const listFn = useServerFn(listInventory);
   const { data: items, isLoading } = useQuery({
@@ -142,6 +144,13 @@ function InventoryPage() {
                   <div className="font-mono font-bold text-lg">{formatMoney(it.unit_price)}</div>
                 </div>
                 <div className="flex gap-1 shrink-0">
+                  {it.category === "negotiation" && (
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-700"
+                      title="تحويل إلى منتجاتي"
+                      onClick={() => setConverting(it)}>
+                      <ArrowRightLeft className="h-4 w-4" />
+                    </Button>
+                  )}
                   <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditing(it); setOpen(true); }}>
                     <Pencil className="h-4 w-4" />
                   </Button>
@@ -159,6 +168,12 @@ function InventoryPage() {
       <ItemDialog open={open} onOpenChange={setOpen} editing={editing} defaultCategory={category} onSaved={() => {
         qc.invalidateQueries({ queryKey: ["inventory"] });
       }} />
+
+      <ConvertDialog
+        item={converting}
+        onClose={() => setConverting(null)}
+        onDone={() => { qc.invalidateQueries({ queryKey: ["inventory"] }); setConverting(null); }}
+      />
     </div>
   );
 }
