@@ -1,0 +1,1 @@
+ALTER TABLE public.inventory_items ADD COLUMN public_price numeric(14,2) NOT NULL DEFAULT 0;
