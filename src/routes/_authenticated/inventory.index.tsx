@@ -761,6 +761,7 @@ function PdfExportDialog({
 function ConvertDialog({
   item, onClose, onDone,
 }: { item: Item | null; onClose: () => void; onDone: () => void }) {
+  void 0;
   const [price, setPrice] = useState("0");
   const [cost, setCost] = useState("0");
   const [qty, setQty] = useState("0");
