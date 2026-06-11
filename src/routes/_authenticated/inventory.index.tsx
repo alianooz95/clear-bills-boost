@@ -375,6 +375,7 @@ const PDF_FIELDS: { key: string; label: string }[] = [
   { key: "bonus_quantity", label: "البونص" },
   { key: "cost_price", label: "سعر التكلفة" },
   { key: "unit_price", label: "سعر البيع" },
+  { key: "public_price", label: "سعر الجمهور" },
   { key: "batch_number", label: "رقم الباتش" },
   { key: "expiry_date", label: "تاريخ الانتهاء" },
 ];
@@ -397,6 +398,7 @@ function PdfExportDialog({
     bonus_quantity: category === "owned",
     cost_price: false,
     unit_price: true,
+    public_price: false,
     batch_number: category === "owned",
     expiry_date: category === "owned",
   });
@@ -412,6 +414,7 @@ function PdfExportDialog({
       bonus_quantity: category === "owned",
       cost_price: false,
       unit_price: true,
+      public_price: false,
       batch_number: category === "owned",
       expiry_date: category === "owned",
     });
@@ -441,8 +444,9 @@ function PdfExportDialog({
           fields.bonus_quantity && td(String(it.bonus_quantity || 0), { end: true, ltr: true }),
           fields.cost_price && td(formatMoney(it.cost_price), { end: true, ltr: true }),
           fields.unit_price && td(formatMoney(it.unit_price), { end: true, ltr: true, bold: true }),
+          fields.public_price && td(formatMoney(it.public_price), { end: true, ltr: true }),
           fields.batch_number && td(esc(it.batch_number), { ltr: true }),
-          fields.expiry_date && td(esc(it.expiry_date), { ltr: true }),
+          fields.expiry_date && td(esc(it.expiry_date ? it.expiry_date.slice(0, 7) : null), { ltr: true }),
         ].filter(Boolean).join("");
         return `<tr>${cells}</tr>`;
       }).join("");
@@ -458,6 +462,7 @@ function PdfExportDialog({
         fields.bonus_quantity && th("بونص", true),
         fields.cost_price && th("التكلفة", true),
         fields.unit_price && th("السعر", true),
+        fields.public_price && th("الجمهور", true),
         fields.batch_number && th("الباتش"),
         fields.expiry_date && th("الانتهاء"),
       ].filter(Boolean).join("");
