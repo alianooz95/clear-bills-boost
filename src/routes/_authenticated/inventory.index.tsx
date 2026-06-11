@@ -386,6 +386,20 @@ const CAT_LABEL: Record<Category, string> = {
   market: "أسعار السوق المرجعية",
 };
 
+type CompanyInfo = { name: string; address: string; phone: string; logo: string };
+const COMPANY_KEY = "oplus.company.info";
+const DEFAULT_COMPANY: CompanyInfo = { name: "Oplus Pharma", address: "", phone: "", logo: "" };
+function loadCompany(): CompanyInfo {
+  if (typeof window === "undefined") return DEFAULT_COMPANY;
+  try {
+    const raw = localStorage.getItem(COMPANY_KEY);
+    return raw ? { ...DEFAULT_COMPANY, ...JSON.parse(raw) } : DEFAULT_COMPANY;
+  } catch { return DEFAULT_COMPANY; }
+}
+function saveCompany(c: CompanyInfo) {
+  try { localStorage.setItem(COMPANY_KEY, JSON.stringify(c)); } catch {}
+}
+
 function PdfExportDialog({
   open, onOpenChange, category, items,
 }: { open: boolean; onOpenChange: (v: boolean) => void; category: Category; items: Item[] }) {
@@ -403,6 +417,28 @@ function PdfExportDialog({
     expiry_date: category === "owned",
   });
   const [busy, setBusy] = useState(false);
+  const [company, setCompany] = useState<CompanyInfo>(DEFAULT_COMPANY);
+  const [showSettings, setShowSettings] = useState(false);
+
+  useStateReset(open, () => {
+    setCompany(loadCompany());
+  });
+
+  const updateCompany = (patch: Partial<CompanyInfo>) => {
+    setCompany((c) => {
+      const next = { ...c, ...patch };
+      saveCompany(next);
+      return next;
+    });
+  };
+
+  const onLogoFile = (file: File | null) => {
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { toast.error("حجم الشعار أكبر من 2MB"); return; }
+    const reader = new FileReader();
+    reader.onload = () => updateCompany({ logo: String(reader.result || "") });
+    reader.readAsDataURL(file);
+  };
 
   useStateReset(open, () => {
     setFields({
@@ -475,15 +511,24 @@ function PdfExportDialog({
 
       const todayLong = new Date().toLocaleDateString("ar-EG", { year: "numeric", month: "long", day: "numeric" });
       const container = document.createElement("div");
-      container.style.cssText = `position:fixed;left:-10000px;top:0;width:900px;background:#ffffff;color:${TEXT};direction:rtl;font-family:'Cairo','Tajawal','Segoe UI',Arial,sans-serif;`;
+      container.lang = "ar";
+      container.dir = "rtl";
+      container.style.cssText = `position:fixed;left:-10000px;top:0;width:900px;background:#ffffff;color:${TEXT};direction:rtl;font-family:'Tajawal','Cairo','Segoe UI',Arial,sans-serif;`;
+      const logoHtml = company.logo
+        ? `<img src="${company.logo}" crossorigin="anonymous" style="height:56px;width:auto;max-width:140px;object-fit:contain;background:#fff;padding:6px;border-radius:10px;" />`
+        : `<div style="height:56px;width:56px;border-radius:12px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:22px;">${esc((company.name || "O").trim().charAt(0))}</div>`;
+      const addressLine = company.address ? `<div style="font-size:11px;opacity:.85;margin-top:4px;">${esc(company.address)}</div>` : "";
       container.innerHTML = `
         <div style="background:linear-gradient(135deg,${BRAND} 0%,#14b8a6 100%);padding:28px 32px;color:#fff;position:relative;overflow:hidden;">
           <div style="position:absolute;inset:0;background:radial-gradient(circle at 90% 20%,rgba(255,255,255,.18),transparent 50%);"></div>
-          <div style="display:flex;justify-content:space-between;align-items:center;position:relative;">
-            <div>
-              <div style="font-size:11px;letter-spacing:.3em;opacity:.85;margin-bottom:6px;">OPLUS PHARMA</div>
-              <h2 style="font-size:24px;font-weight:700;margin:0;letter-spacing:-.01em;">${CAT_LABEL[category]}</h2>
-              <p style="font-size:12px;margin:6px 0 0;opacity:.9;">قائمة المنتجات الدوائية المعتمدة</p>
+          <div style="display:flex;justify-content:space-between;align-items:center;position:relative;gap:16px;">
+            <div style="display:flex;align-items:center;gap:14px;">
+              ${logoHtml}
+              <div>
+                <div style="font-size:11px;letter-spacing:.25em;opacity:.85;margin-bottom:4px;">${esc((company.name || "Oplus Pharma").toUpperCase())}</div>
+                <h2 style="font-size:22px;font-weight:700;margin:0;letter-spacing:-.01em;">${CAT_LABEL[category]}</h2>
+                ${addressLine}
+              </div>
             </div>
             <div style="text-align:end;font-size:11px;opacity:.95;">
               <div style="opacity:.75;margin-bottom:4px;">تاريخ الإصدار</div>
@@ -499,15 +544,36 @@ function PdfExportDialog({
                 <thead><tr>${headers}</tr></thead>
                 <tbody>${rows}</tbody>
               </table>`}
-          <div style="margin-top:24px;padding-top:16px;border-top:1px solid ${BORDER};display:flex;justify-content:space-between;align-items:center;font-size:10px;color:${MUTED};">
-            <span>الأسعار قابلة للتغيير دون إشعار مسبق.</span>
-            <span>© Oplus Pharma · ${new Date().getFullYear()}</span>
+          <div style="margin-top:24px;padding-top:16px;border-top:1px solid ${BORDER};font-size:10px;color:${MUTED};">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;">
+              <div style="line-height:1.6;">
+                <div style="font-weight:700;color:${TEXT};font-size:11px;">${esc(company.name || "Oplus Pharma")}</div>
+                ${company.address ? `<div>${esc(company.address)}</div>` : ""}
+                ${company.phone ? `<div dir="ltr" style="font-family:'SF Mono',Menlo,monospace;">${esc(company.phone)}</div>` : ""}
+              </div>
+              <div style="text-align:end;line-height:1.6;">
+                <div>الأسعار قابلة للتغيير دون إشعار مسبق.</div>
+                <div>© ${new Date().getFullYear()}</div>
+              </div>
+            </div>
           </div>
         </div>
       `;
       document.body.appendChild(container);
 
       try {
+        // Ensure Arabic webfont is ready before rasterizing — otherwise html2canvas
+        // renders glyphs from a fallback font and Arabic looks broken.
+        if (document.fonts) {
+          try {
+            await Promise.all([
+              document.fonts.load("700 22px Tajawal"),
+              document.fonts.load("500 11px Tajawal"),
+              document.fonts.load("400 11px Tajawal"),
+            ]);
+            await document.fonts.ready;
+          } catch {}
+        }
         const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
           import("html2canvas-pro"),
           import("jspdf"),
