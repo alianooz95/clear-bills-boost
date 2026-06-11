@@ -333,8 +333,12 @@ function ItemDialog({
               <Input className="font-mono" dir="ltr" type="number" min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label>تاريخ الانتهاء</Label>
-              <Input dir="ltr" type="date" value={expiry} onChange={(e) => setExpiry(e.target.value)} />
+              <Label>سعر الجمهور</Label>
+              <Input className="font-mono" dir="ltr" type="number" min="0" step="0.01" value={publicPrice} onChange={(e) => setPublicPrice(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>تاريخ الانتهاء (شهر/سنة)</Label>
+              <Input dir="ltr" type="month" value={expiry} onChange={(e) => setExpiry(e.target.value)} />
             </div>
             <div className="space-y-1.5">
               <Label>رقم الباتش</Label>
