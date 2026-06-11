@@ -566,7 +566,7 @@ function ConvertDialog({
     setQty(String(item?.quantity ?? "0"));
     setBonus(String(item?.bonus_quantity ?? "0"));
     setBatch(item?.batch_number ?? "");
-    setExpiry(item?.expiry_date ?? "");
+    setExpiry(item?.expiry_date ? item.expiry_date.slice(0, 7) : "");
   });
 
   const convertFn = useServerFn(convertToOwned);
@@ -581,7 +581,7 @@ function ConvertDialog({
           quantity: Number(qty) || 0,
           bonus_quantity: Number(bonus) || 0,
           batch_number: batch.trim() || null,
-          expiry_date: expiry || null,
+          expiry_date: expiry ? `${expiry}-01` : null,
           supplier_id: item.supplier_id,
           pharma_form: item.pharma_form,
           country: item.country,
@@ -622,8 +622,8 @@ function ConvertDialog({
             <Input dir="ltr" value={batch} onChange={(e) => setBatch(e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <Label>تاريخ الانتهاء</Label>
-            <Input dir="ltr" type="date" value={expiry} onChange={(e) => setExpiry(e.target.value)} />
+            <Label>تاريخ الانتهاء (شهر/سنة)</Label>
+            <Input dir="ltr" type="month" value={expiry} onChange={(e) => setExpiry(e.target.value)} />
           </div>
         </div>
         <DialogFooter>
