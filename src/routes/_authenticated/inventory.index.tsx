@@ -357,6 +357,166 @@ function useStateReset(open: boolean, fn: () => void) {
   }, [open]);
 }
 
+const PDF_FIELDS: { key: string; label: string }[] = [
+  { key: "scientific_name", label: "الاسم العلمي" },
+  { key: "pharma_form", label: "الشكل الصيدلاني" },
+  { key: "country", label: "بلد المنشأ" },
+  { key: "supplier", label: "المورد" },
+  { key: "quantity", label: "الكمية" },
+  { key: "bonus_quantity", label: "البونص" },
+  { key: "cost_price", label: "سعر التكلفة" },
+  { key: "unit_price", label: "سعر البيع" },
+  { key: "batch_number", label: "رقم الباتش" },
+  { key: "expiry_date", label: "تاريخ الانتهاء" },
+];
+
+const CAT_LABEL: Record<Category, string> = {
+  owned: "منتجاتي المتوفرة",
+  negotiation: "منتجات تحت التفاوض",
+  market: "أسعار السوق المرجعية",
+};
+
+function PdfExportDialog({
+  open, onOpenChange, category, items,
+}: { open: boolean; onOpenChange: (v: boolean) => void; category: Category; items: Item[] }) {
+  const [fields, setFields] = useState<Record<string, boolean>>({
+    scientific_name: true,
+    pharma_form: true,
+    country: true,
+    supplier: false,
+    quantity: category === "owned",
+    bonus_quantity: category === "owned",
+    cost_price: false,
+    unit_price: true,
+    batch_number: category === "owned",
+    expiry_date: category === "owned",
+  });
+  const [busy, setBusy] = useState(false);
+
+  useStateReset(open, () => {
+    setFields({
+      scientific_name: true,
+      pharma_form: true,
+      country: true,
+      supplier: false,
+      quantity: category === "owned",
+      bonus_quantity: category === "owned",
+      cost_price: false,
+      unit_price: true,
+      batch_number: category === "owned",
+      expiry_date: category === "owned",
+    });
+  });
+
+  const toggle = (k: string) => setFields((f) => ({ ...f, [k]: !f[k] }));
+
+  const exportPdf = async () => {
+    setBusy(true);
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      const esc = (s: any) => String(s ?? "—").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]!));
+      const th = (label: string, end = false) =>
+        `<th style="border:1px solid #000;padding:4px 6px;text-align:${end ? "end" : "start"};background:#f3f4f6;">${label}</th>`;
+      const td = (val: string, opts: { end?: boolean; bold?: boolean; ltr?: boolean } = {}) =>
+        `<td style="border:1px solid #000;padding:4px 6px;text-align:${opts.end ? "end" : "start"};${opts.bold ? "font-weight:700;" : ""}${opts.ltr ? "direction:ltr;" : ""}font-family:${opts.ltr ? "monospace" : "inherit"};">${val}</td>`;
+
+      const rows = items.map((it, idx) => {
+        const cells = [
+          td(String(idx + 1)),
+          td(esc(it.name), { bold: true }),
+          fields.scientific_name && td(esc(it.scientific_name)),
+          fields.pharma_form && td(esc(it.pharma_form)),
+          fields.country && td(esc(it.country)),
+          fields.supplier && td(esc(it.suppliers?.name)),
+          fields.quantity && td(`${it.quantity} ${esc(it.unit || "")}`, { end: true, ltr: true }),
+          fields.bonus_quantity && td(String(it.bonus_quantity || 0), { end: true, ltr: true }),
+          fields.cost_price && td(formatMoney(it.cost_price), { end: true, ltr: true }),
+          fields.unit_price && td(formatMoney(it.unit_price), { end: true, ltr: true, bold: true }),
+          fields.batch_number && td(esc(it.batch_number), { ltr: true }),
+          fields.expiry_date && td(esc(it.expiry_date), { ltr: true }),
+        ].filter(Boolean).join("");
+        return `<tr>${cells}</tr>`;
+      }).join("");
+
+      const headers = [
+        th("#"),
+        th("الاسم التجاري"),
+        fields.scientific_name && th("الاسم العلمي"),
+        fields.pharma_form && th("الشكل"),
+        fields.country && th("المنشأ"),
+        fields.supplier && th("المورد"),
+        fields.quantity && th("الكمية", true),
+        fields.bonus_quantity && th("بونص", true),
+        fields.cost_price && th("التكلفة", true),
+        fields.unit_price && th("السعر", true),
+        fields.batch_number && th("الباتش"),
+        fields.expiry_date && th("الانتهاء"),
+      ].filter(Boolean).join("");
+
+      const container = document.createElement("div");
+      container.style.cssText = "position:fixed;left:-10000px;top:0;width:900px;background:white;color:black;padding:24px;direction:rtl;font-family:'Cairo','Tajawal',Arial,sans-serif;";
+      container.innerHTML = `
+        <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:12px;margin-bottom:16px;">
+          <h2 style="font-size:20px;font-weight:700;margin:0;">Oplus Pharma</h2>
+          <p style="font-size:14px;margin:4px 0 0;">${CAT_LABEL[category]}</p>
+          <p style="font-size:11px;color:#555;margin:4px 0 0;">تاريخ الإصدار: <span dir="ltr" style="font-family:monospace;">${today}</span></p>
+        </div>
+        ${items.length === 0
+          ? `<p style="text-align:center;padding:32px;color:#666;">لا توجد منتجات.</p>`
+          : `<table style="width:100%;border-collapse:collapse;font-size:11px;"><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table>`}
+        <p style="font-size:10px;color:#666;text-align:center;margin-top:24px;">الأسعار قابلة للتغيير دون إشعار مسبق.</p>
+      `;
+      document.body.appendChild(container);
+
+      const html2pdf = (await import("html2pdf.js")).default;
+      await html2pdf()
+        .from(container)
+        .set({
+          margin: 10,
+          filename: `${CAT_LABEL[category]}-${today}.pdf`,
+          image: { type: "jpeg", quality: 0.95 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        })
+        .save();
+      document.body.removeChild(container);
+      toast.success("تم تصدير PDF");
+      onOpenChange(false);
+    } catch (e: any) {
+      toast.error(e?.message || "فشل التصدير");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>تصدير PDF — {CAT_LABEL[category]}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground">اختر الأعمدة التي ستظهر في الملف:</p>
+          <div className="grid grid-cols-2 gap-2">
+            {PDF_FIELDS.map((f) => (
+              <Label key={f.key} className="flex items-center gap-2 text-sm font-normal cursor-pointer">
+                <Checkbox checked={!!fields[f.key]} onCheckedChange={() => toggle(f.key)} />
+                {f.label}
+              </Label>
+            ))}
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>إلغاء</Button>
+          <Button onClick={exportPdf} disabled={busy}>
+            <FileDown className="h-4 w-4 ms-1" /> {busy ? "جاري التصدير…" : "تصدير"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function ConvertDialog({
   item, onClose, onDone,
 }: { item: Item | null; onClose: () => void; onDone: () => void }) {
