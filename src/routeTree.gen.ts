@@ -20,6 +20,7 @@ import { Route as AuthenticatedPurchasesIndexRouteImport } from './routes/_authe
 import { Route as AuthenticatedInvoicesIndexRouteImport } from './routes/_authenticated/invoices.index'
 import { Route as AuthenticatedInventoryIndexRouteImport } from './routes/_authenticated/inventory.index'
 import { Route as AuthenticatedCustomersIndexRouteImport } from './routes/_authenticated/customers.index'
+import { Route as ApiPublicInitOwnerRouteImport } from './routes/api/public/init-owner'
 import { Route as AuthenticatedSuppliersIdRouteImport } from './routes/_authenticated/suppliers.$id'
 import { Route as AuthenticatedReceiptsNewRouteImport } from './routes/_authenticated/receipts.new'
 import { Route as AuthenticatedReceiptsIdRouteImport } from './routes/_authenticated/receipts.$id'
@@ -92,6 +93,11 @@ const AuthenticatedCustomersIndexRoute =
     path: '/customers/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicInitOwnerRoute = ApiPublicInitOwnerRouteImport.update({
+  id: '/api/public/init-owner',
+  path: '/api/public/init-owner',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedSuppliersIdRoute =
   AuthenticatedSuppliersIdRouteImport.update({
     id: '/suppliers/$id',
@@ -171,6 +177,7 @@ export interface FileRoutesByFullPath {
   '/receipts/$id': typeof AuthenticatedReceiptsIdRoute
   '/receipts/new': typeof AuthenticatedReceiptsNewRoute
   '/suppliers/$id': typeof AuthenticatedSuppliersIdRoute
+  '/api/public/init-owner': typeof ApiPublicInitOwnerRoute
   '/customers/': typeof AuthenticatedCustomersIndexRoute
   '/inventory/': typeof AuthenticatedInventoryIndexRoute
   '/invoices/': typeof AuthenticatedInvoicesIndexRoute
@@ -194,6 +201,7 @@ export interface FileRoutesByTo {
   '/receipts/$id': typeof AuthenticatedReceiptsIdRoute
   '/receipts/new': typeof AuthenticatedReceiptsNewRoute
   '/suppliers/$id': typeof AuthenticatedSuppliersIdRoute
+  '/api/public/init-owner': typeof ApiPublicInitOwnerRoute
   '/customers': typeof AuthenticatedCustomersIndexRoute
   '/inventory': typeof AuthenticatedInventoryIndexRoute
   '/invoices': typeof AuthenticatedInvoicesIndexRoute
@@ -219,6 +227,7 @@ export interface FileRoutesById {
   '/_authenticated/receipts/$id': typeof AuthenticatedReceiptsIdRoute
   '/_authenticated/receipts/new': typeof AuthenticatedReceiptsNewRoute
   '/_authenticated/suppliers/$id': typeof AuthenticatedSuppliersIdRoute
+  '/api/public/init-owner': typeof ApiPublicInitOwnerRoute
   '/_authenticated/customers/': typeof AuthenticatedCustomersIndexRoute
   '/_authenticated/inventory/': typeof AuthenticatedInventoryIndexRoute
   '/_authenticated/invoices/': typeof AuthenticatedInvoicesIndexRoute
@@ -244,6 +253,7 @@ export interface FileRouteTypes {
     | '/receipts/$id'
     | '/receipts/new'
     | '/suppliers/$id'
+    | '/api/public/init-owner'
     | '/customers/'
     | '/inventory/'
     | '/invoices/'
@@ -267,6 +277,7 @@ export interface FileRouteTypes {
     | '/receipts/$id'
     | '/receipts/new'
     | '/suppliers/$id'
+    | '/api/public/init-owner'
     | '/customers'
     | '/inventory'
     | '/invoices'
@@ -291,6 +302,7 @@ export interface FileRouteTypes {
     | '/_authenticated/receipts/$id'
     | '/_authenticated/receipts/new'
     | '/_authenticated/suppliers/$id'
+    | '/api/public/init-owner'
     | '/_authenticated/customers/'
     | '/_authenticated/inventory/'
     | '/_authenticated/invoices/'
@@ -305,6 +317,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPublicInitOwnerRoute: typeof ApiPublicInitOwnerRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -385,6 +398,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/customers/'
       preLoaderRoute: typeof AuthenticatedCustomersIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/public/init-owner': {
+      id: '/api/public/init-owner'
+      path: '/api/public/init-owner'
+      fullPath: '/api/public/init-owner'
+      preLoaderRoute: typeof ApiPublicInitOwnerRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/suppliers/$id': {
       id: '/_authenticated/suppliers/$id'
@@ -543,7 +563,18 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPublicInitOwnerRoute: ApiPublicInitOwnerRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
