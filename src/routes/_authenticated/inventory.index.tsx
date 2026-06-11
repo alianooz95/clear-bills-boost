@@ -571,8 +571,8 @@ function PdfExportDialog({
       container.lang = "ar";
       container.dir = "rtl";
       container.style.cssText = `position:fixed;left:-10000px;top:0;width:900px;background:#ffffff;color:${TEXT};direction:rtl;font-family:'Tajawal','Cairo','Segoe UI',Arial,sans-serif;`;
-      const logoHtml = company.logo
-        ? `<img src="${company.logo}" crossorigin="anonymous" style="height:56px;width:auto;max-width:140px;object-fit:contain;background:#fff;padding:6px;border-radius:10px;" />`
+      const logoHtml = company.logo_data_url
+        ? `<img src="${company.logo_data_url}" crossorigin="anonymous" style="height:56px;width:auto;max-width:140px;object-fit:contain;background:#fff;padding:6px;border-radius:10px;" />`
         : `<div style="height:56px;width:56px;border-radius:12px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:22px;">${esc((company.name || "O").trim().charAt(0))}</div>`;
       const addressLine = company.address ? `<div style="font-size:11px;opacity:.85;margin-top:4px;">${esc(company.address)}</div>` : "";
       container.innerHTML = `
@@ -724,8 +724,8 @@ function PdfExportDialog({
                 <div className="space-y-1">
                   <Label className="text-xs">شعار الشركة (PNG/JPG، حد أقصى 2MB)</Label>
                   <div className="flex items-center gap-2">
-                    {company.logo && (
-                      <img src={company.logo} alt="logo" className="h-10 w-10 rounded border bg-white object-contain" />
+                    {company.logo_data_url && (
+                      <img src={company.logo_data_url} alt="logo" className="h-10 w-10 rounded border bg-white object-contain" />
                     )}
                     <Input
                       type="file"
@@ -733,8 +733,8 @@ function PdfExportDialog({
                       onChange={(e) => onLogoFile(e.target.files?.[0] ?? null)}
                       className="text-xs"
                     />
-                    {company.logo && (
-                      <Button type="button" variant="ghost" size="sm" onClick={() => updateCompany({ logo: "" })}>
+                    {company.logo_data_url && (
+                      <Button type="button" variant="ghost" size="sm" onClick={() => updateCompany({ logo_data_url: "" })}>
                         حذف
                       </Button>
                     )}
