@@ -209,6 +209,7 @@ function ItemDialog({
   const [unit, setUnit] = useState("علبة");
   const [price, setPrice] = useState("0");
   const [cost, setCost] = useState("0");
+  const [publicPrice, setPublicPrice] = useState("0");
   const [qty, setQty] = useState("0");
   const [bonus, setBonus] = useState("0");
   const [country, setCountry] = useState("");
@@ -224,10 +225,11 @@ function ItemDialog({
     setScientific(editing?.scientific_name ?? "");
     setPharmaForm(editing?.pharma_form ?? "");
     setBatch(editing?.batch_number ?? "");
-    setExpiry(editing?.expiry_date ?? "");
+    setExpiry(editing?.expiry_date ? editing.expiry_date.slice(0, 7) : "");
     setUnit(editing?.unit ?? "علبة");
     setPrice(String(editing?.unit_price ?? "0"));
     setCost(String(editing?.cost_price ?? "0"));
+    setPublicPrice(String(editing?.public_price ?? "0"));
     setQty(String(editing?.quantity ?? "0"));
     setBonus(String(editing?.bonus_quantity ?? "0"));
     setCountry(editing?.country ?? "");
@@ -244,10 +246,11 @@ function ItemDialog({
         name: name.trim(),
         scientific_name: scientific.trim() || null,
         batch_number: batch.trim() || null,
-        expiry_date: expiry || null,
+        expiry_date: expiry ? `${expiry}-01` : null,
         unit: unit.trim() || "علبة",
         unit_price: Number(price) || 0,
         cost_price: Number(cost) || 0,
+        public_price: Number(publicPrice) || 0,
         quantity: Number(qty) || 0,
         bonus_quantity: Number(bonus) || 0,
         supplier_id: supplierId || null,
