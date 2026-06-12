@@ -93,10 +93,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "نظام سحابي مبسط لإدارة فواتير المبيعات والفواتير التعويضية وحسابات العملاء." },
       { name: "author", content: "Lovable" },
       { property: "og:title", content: "نظام إدارة الفواتير والعملاء" },
-      { property: "og:description", content: "إدارة العملاء والفواتير وكشف الحساب بسهولة." },
+      { property: "og:description", content: "نظام سحابي مبسط لإدارة فواتير المبيعات والفواتير التعويضية وحسابات العملاء." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "نظام إدارة الفواتير والعملاء" },
+      { name: "twitter:description", content: "نظام سحابي مبسط لإدارة فواتير المبيعات والفواتير التعويضية وحسابات العملاء." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b3166015-a314-4da4-ab05-2af42e9e5aad/id-preview-1e63aea1--bdc3ed64-d6ed-4b29-9633-d32e781e3703.lovable.app-1781229321120.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b3166015-a314-4da4-ab05-2af42e9e5aad/id-preview-1e63aea1--bdc3ed64-d6ed-4b29-9633-d32e781e3703.lovable.app-1781229321120.png" },
     ],
     links: [
       {
