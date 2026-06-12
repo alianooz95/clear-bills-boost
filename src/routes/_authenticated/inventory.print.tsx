@@ -68,16 +68,37 @@ function PrintCatalog() {
   const today = new Date().toISOString().slice(0, 10);
 
   const exportPdf = async () => {
-    const el = document.querySelector(".catalog-print") as HTMLElement | null;
+    const el = document.getElementById("inventory-print-section") as HTMLElement | null;
     if (!el) return;
+
+    // Ensure Tajawal font is loaded before snapshotting so Arabic glyphs
+    // render as connected ligatures rather than disconnected characters.
+    if (!document.getElementById("tajawal-font-link")) {
+      const link = document.createElement("link");
+      link.id = "tajawal-font-link";
+      link.rel = "stylesheet";
+      link.href =
+        "https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap";
+      document.head.appendChild(link);
+    }
+    try {
+      // @ts-ignore
+      if (document.fonts?.ready) await document.fonts.ready;
+    } catch {}
+
     const html2pdf = (await import("html2pdf.js")).default;
     await html2pdf()
       .from(el)
       .set({
-        margin: 10,
-        filename: `${CAT_LABEL[category]}-${today}.pdf`,
-        image: { type: "jpeg", quality: 0.95 },
-        html2canvas: { scale: 2, useCORS: true },
+        margin: [10, 10, 15, 10],
+        filename: `Oplus_Inventory_${today}.pdf`,
+        image: { type: "jpeg", quality: 1.0 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          letterRendering: false,
+          logging: false,
+        },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
       })
       .save();
@@ -110,7 +131,15 @@ function PrintCatalog() {
         </div>
       </div>
 
-      <div className="catalog-print p-6 mx-auto" style={{ maxWidth: "900px" }}>
+      <div
+        id="inventory-print-section"
+        className="catalog-print p-6 mx-auto"
+        style={{
+          maxWidth: "900px",
+          direction: "rtl",
+          fontFamily: "'Tajawal', sans-serif",
+        }}
+      >
         <div className="text-center border-b-2 border-black pb-3 mb-4">
           <h2 className="text-xl font-bold">Oplus Pharma</h2>
           <p className="text-sm">{CAT_LABEL[category]}</p>
